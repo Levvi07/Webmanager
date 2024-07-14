@@ -1,0 +1,113 @@
+import csv,json,hashlib,threading,time
+users_data = []
+tokens_data = []
+hash_data = []
+user_perm_data = []
+site_perm_data = []
+site_config_data = []
+
+checksums = {}
+
+def auto_refresh():
+    global site_config_data
+    while 1:
+        for filename in checksums.keys():
+            f = open("./data/" + filename, encoding="UTF-8")
+            cur_check = hashlib.md5(f.read().encode()).hexdigest()
+            if cur_check != checksums[filename]:
+                print("File changed:", filename)
+                checksums[filename] = cur_check
+                funcs[filename]()
+        time.sleep(5)     
+
+def refresh_users_data():
+    global users_data
+    users_file = open("./data/users.csv", encoding="UTF-8")
+    csv_reader = csv.reader(users_file)
+    users_data = []
+    for row in csv_reader:
+        users_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    users_file.seek(0)    
+    checksums["users.csv"] = hashlib.md5(users_file.read().encode()).hexdigest()
+    users_file.close()
+
+
+def refresh_tokens_data():
+    global tokens_data
+    tokens_file = open("./data/tokens.csv", encoding="UTF-8")
+    csv_reader = csv.reader(tokens_file)
+    tokens_data = []
+    for row in csv_reader:
+        tokens_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    tokens_file.seek(0)    
+    checksums["tokens.csv"] = hashlib.md5(tokens_file.read().encode()).hexdigest()    
+    tokens_file.close()
+
+def refresh_hash_data():
+    global hash_data
+    hash_file = open("./data/pwd_hashes.csv", encoding="UTF-8")
+    csv_reader = csv.reader(hash_file)
+    hash_data = []
+    for row in csv_reader:
+        hash_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    hash_file.seek(0)    
+    checksums["pwd_hashes.csv"] = hashlib.md5((hash_file.read().encode())).hexdigest()
+    hash_file.close()
+
+
+def refresh_user_perm_data():
+    global user_perm_data
+    user_perm_file = open("./data/user_perms.csv", encoding="UTF-8")
+    csv_reader = csv.reader(user_perm_file)
+    user_perm_data = []
+    for row in csv_reader:
+        user_perm_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    user_perm_file.seek(0)    
+    checksums["user_perms.csv"] = hashlib.md5(user_perm_file.read().encode()).hexdigest()    
+    user_perm_file.close()
+
+
+def refresh_site_perms_data():
+    global site_perm_data
+    site_perm_file = open("./data/site_perms.csv", encoding="UTF-8")
+    csv_reader = csv.reader(site_perm_file)
+    site_perm_data = []
+    for row in csv_reader:
+        site_perm_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    site_perm_file.seek(0)
+    checksums["site_perms.csv"] = hashlib.md5(site_perm_file.read().encode()).hexdigest()    
+    site_perm_file.close()
+
+
+def refresh_site_config_data():
+    global site_config_data
+    site_config_file = open("./data/site_configs.json", encoding="UTF-8")
+    content = site_config_file.read()
+    site_config_data = json.loads(content)
+    checksums["site_configs.json"] = hashlib.md5(content.encode()).hexdigest()
+    site_config_file.close()
+
+def init():
+    refresh_hash_data()
+    refresh_site_config_data()
+    refresh_site_perms_data()
+    refresh_user_perm_data()
+    refresh_tokens_data()
+    refresh_users_data()
+    t = threading.Thread(target=auto_refresh)
+    t.daemon = True
+    t.start()
+
+funcs = {
+    "users.csv": refresh_users_data,
+    "tokens.csv": refresh_tokens_data,
+    "pwd_hashes.csv":refresh_hash_data,
+    "user_perms.csv":refresh_user_perm_data,
+    "site_perms.csv":refresh_site_perms_data,
+    "site_configs.json": refresh_site_config_data
+}
