@@ -5,6 +5,8 @@ hash_data = []
 user_perm_data = []
 site_perm_data = []
 site_config_data = []
+roles_data = []
+groups_data = []
 
 checksums = {}
 
@@ -44,6 +46,7 @@ def refresh_tokens_data():
     tokens_file.seek(0)    
     checksums["tokens.csv"] = hashlib.md5(tokens_file.read().encode()).hexdigest()    
     tokens_file.close()
+
 
 def refresh_hash_data():
     global hash_data
@@ -92,16 +95,33 @@ def refresh_site_config_data():
     checksums["site_configs.json"] = hashlib.md5(content.encode()).hexdigest()
     site_config_file.close()
 
-def init():
-    refresh_hash_data()
-    refresh_site_config_data()
-    refresh_site_perms_data()
-    refresh_user_perm_data()
-    refresh_tokens_data()
-    refresh_users_data()
-    t = threading.Thread(target=auto_refresh)
-    t.daemon = True
-    t.start()
+
+def refresh_roles_data():
+    global roles_data
+    roles_file = open("./data/roles.csv", encoding="UTF-8")
+    csv_reader = csv.reader(roles_file)
+    roles_data = []
+    for row in csv_reader:
+        roles_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    roles_file.seek(0)
+    checksums["roles.csv"] = hashlib.md5(roles_file.read().encode()).hexdigest()    
+    roles_file.close()
+
+
+def refresh_groups_data():
+    global groups_data
+    groups_file = open("./data/groups.csv", encoding="UTF-8")
+    csv_reader = csv.reader(groups_file)
+    groups_data = []
+    for row in csv_reader:
+        groups_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    groups_file.seek(0)
+    checksums["groups.csv"] = hashlib.md5(groups_file.read().encode()).hexdigest()    
+    groups_file.close()  
+
+
 
 funcs = {
     "users.csv": refresh_users_data,
@@ -109,5 +129,15 @@ funcs = {
     "pwd_hashes.csv":refresh_hash_data,
     "user_perms.csv":refresh_user_perm_data,
     "site_perms.csv":refresh_site_perms_data,
-    "site_configs.json": refresh_site_config_data
+    "site_configs.json": refresh_site_config_data,
+    "roles.csv":refresh_roles_data,
+    "groups.csv":refresh_groups_data
 }
+
+
+def init():
+    for key in funcs.keys():
+        funcs[key]()
+    t = threading.Thread(target=auto_refresh)
+    t.daemon = True
+    t.start()

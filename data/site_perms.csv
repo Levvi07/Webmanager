@@ -1,1 +1,2 @@
-URL,AccesLevel
+endpoint,AccesLevel, access_users_id, access_groups_id, perm_level
+/admin/*,1,,,2

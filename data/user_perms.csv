@@ -1,1 +1,3 @@
-ID,PermLevel
+ID,RoleIds, GroupIds
+1,1,2
+2,5,7

@@ -22,10 +22,15 @@ header a{
     font-weight: bold;
 }
 
+#user_button{
+    float:right;
+    margin-right: 2%;
+}
+
 #signout{
     float:right;
-    margin-right: 1%;
+    margin-right: 3%;
 }
 #home{
-    margin-left: 1%;
+    margin-left: 2%;
 }

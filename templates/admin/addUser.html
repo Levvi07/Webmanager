@@ -1,0 +1,49 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Adding User</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="/css/adduser.css">
+    </head>
+    <body>
+        <form action="addUser.html">
+            <label>Full name</label> <br>
+            <input type="text" name="fullname"> <br>
+            <label>Description</label> <br>
+            <input type="text" name="description"> <br>
+            <label>Username</label> <br>
+            <input type="text" name="username"> <br>
+            <label>Password</label> <br>
+            <input type="password" name="password1"> <br>
+            <label>Confirm Password</label> <br>
+            <input type="password" name="password2"> <br>
+            <label>Email</label> <br>
+            <input type="email" name="email"> <br>
+            <label>Select Roles</label> <br>
+            <select id="roles_select">  
+                <option value="0">Choose Roles</option>
+                <option value="1">Admins</option>
+                <option value="2">Gays</option>
+            </select> <br>
+            <label>Selected Roles</label> <br>
+            <table id="roles_display">
+                <tbody>
+                    <tr>
+                        <td>123</td>
+                    </tr>
+                </tbody>
+            </table>
+            <label>Select Groups</label> <br>
+            <select id="groups_select">
+                <option value="0">Choose Groups</option> 
+                <option value="1">Admins</option>
+                GROUP_OPTIONS
+            </select> <br>
+        </form>
+    </body>
+    
+</html>
+<script src="/js/user_rg_select.js"></script>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>

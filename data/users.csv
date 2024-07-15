@@ -1,2 +1,3 @@
-ID,Name,Email
-1,Levi,balog.levi07@gmail.com
+ID,Name,Email, Full name, Description
+1,Levi,balog.levi07@gmail.com, Balog Levente, Admin of admins
+2,user2,example@gmail.com, user2, Test user
