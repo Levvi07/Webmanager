@@ -1,2 +1,3 @@
-endpoint,AccesLevel, access_users_id, access_groups_id, perm_level
-/admin/*,1,,,2
+endpoint,AccesLevel,access_roles_id,access_groups_id,access_users_id,perm_level
+/admin/*,1,1,1,,0
+/user/*,0,,,-1,79

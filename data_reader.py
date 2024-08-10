@@ -20,7 +20,7 @@ def auto_refresh():
                 print("File changed:", filename)
                 checksums[filename] = cur_check
                 funcs[filename]()
-        time.sleep(5)     
+        time.sleep(int(site_config_data["RefreshDataFrequency"]))
 
 def refresh_users_data():
     global users_data

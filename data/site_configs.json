@@ -1,1 +1,4 @@
-{"TokenExpire":"3600"}
+{
+    "TokenExpire":"3600",
+    "RefreshDataFrequency":"2"
+}

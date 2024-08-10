@@ -7,39 +7,33 @@
         <link rel="stylesheet", href="/css/adduser.css">
     </head>
     <body>
-        <form action="addUser.html">
-            <label>Full name</label> <br>
-            <input type="text" name="fullname"> <br>
-            <label>Description</label> <br>
-            <input type="text" name="description"> <br>
-            <label>Username</label> <br>
-            <input type="text" name="username"> <br>
-            <label>Password</label> <br>
-            <input type="password" name="password1"> <br>
-            <label>Confirm Password</label> <br>
-            <input type="password" name="password2"> <br>
-            <label>Email</label> <br>
-            <input type="email" name="email"> <br>
-            <label>Select Roles</label> <br>
+        <form action="addUser.html" method="post">
+            <input type="text" name="fullname" placeholder="Full Name">
+            <textarea name="description" maxlength="390" placeholder="Description"></textarea> <br>  
+            <input type="text" name="username" placeholder="Username *" required> <br>
+            <input type="password" name="password1" placeholder="Password *" required> <br>
+            <input type="password" name="password2" placeholder="Confirm Password *" required> <br>
+            <input type="email" name="email" placeholder="Email *" required> <br>
             <select id="roles_select">  
                 <option value="0">Choose Roles</option>
-                <option value="1">Admins</option>
-                <option value="2">Gays</option>
+                ROLE_OPTIONS
             </select> <br>
-            <label>Selected Roles</label> <br>
-            <table id="roles_display">
-                <tbody>
-                    <tr>
-                        <td>123</td>
-                    </tr>
-                </tbody>
+            <table>
+                <tbody id="roles_display"></tbody>
             </table>
-            <label>Select Groups</label> <br>
+            <input type="hidden" name="roles_post" id="roles_post">
             <select id="groups_select">
-                <option value="0">Choose Groups</option> 
-                <option value="1">Admins</option>
+                <option value="0">Choose Groups</option>
                 GROUP_OPTIONS
             </select> <br>
+            <table>
+                <tbody id="groups_display"></tbody>
+            </table>
+            <input type="hidden" name="groups_post" id="groups_post">
+            <input type="submit">
+            <p id="sel_roles">Selected Roles</p>
+            <p id="sel_groups">Selected Groups</p>
+            <div id="response" style="background-color: BG_COLOR;color:FONTCOLOR;">RESPONSE</diiv>
         </form>
     </body>
     

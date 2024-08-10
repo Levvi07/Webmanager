@@ -1,4 +1,5 @@
 import hashlib, csv, os
+import time as t
 import data_reader as dr
 from datetime import datetime,timedelta
 dr.init()
@@ -26,10 +27,16 @@ def record_token(userid,token, signout=0):
 def validate_token(token):
     #returns 1 or 0 depending on whether the token is valid or not
     expiry = ""
-    for i in range(len(dr.tokens_data)-1):
-        if dr.tokens_data[i+1][1] == token:
-            expiry = dr.tokens_data[i+1][2]
-    print(expiry)
+    while 1:
+        for i in range(len(dr.tokens_data)-1):
+            if dr.tokens_data[i+1][1] == token:
+                expiry = dr.tokens_data[i+1][2]
+                break
+        if expiry == "":
+            #Tokens.csv hasnt updated yet
+            t.sleep(2)
+        else:
+            break #tokens.csv updated new token is valid
     expiry_split = expiry.split(" ")
     date = expiry_split[0].split("-")
     time = expiry_split[1].split(":")
@@ -46,6 +53,8 @@ def check_site_perm(site, token):
     # 0 = only accessible by certain users and groups
     # 1+ = anyone with this perm level or one above it may access
     # not in the list = accessible to anyone
+    # if -1 is present in user_access_role then the URL ends in an id (eg. /user/1)
+    # in this case the given id may be provided access too
 
     # pair endpoints with line_numbers
     perm_indexes = {}
@@ -56,6 +65,10 @@ def check_site_perm(site, token):
         perm_indexes[key] = i+1
     if site[0] != "/":
         site = "/" + site    
+    try:
+        urlid = int(site.split("/")[-1]) #for dynamic id_authentication later
+    except Exception as e:
+        pass
 
     isPresent = 0
     if site in perm_indexes.keys():
@@ -65,6 +78,7 @@ def check_site_perm(site, token):
             if filter.replace("*", "") in site:
                 isPresent = 1
                 site = filter
+                break
     if not isPresent:
         return "200"
     if dr.site_perm_data[perm_indexes[site]][1] == "-1":
@@ -81,22 +95,37 @@ def check_site_perm(site, token):
                 if dr.user_perm_data[i+1][0] == userid:
                     userRoles=dr.user_perm_data[i+1][1].split(";")
                     userGroups=dr.user_perm_data[i+1][2].split(";")
+                    break
 
             if dr.site_perm_data[perm_indexes[site]][1] == "0":
                 HasAccess = 0
                 site_access_roles = dr.site_perm_data[perm_indexes[site]][2].split(";")
                 site_access_groups = dr.site_perm_data[perm_indexes[site]][3].split(";")
+                site_access_users = dr.site_perm_data[perm_indexes[site]][4].split(";")
+                token_user_id = token.split("|")[0]
                 for id in userRoles:
+                    if id == "":continue
                     if id in site_access_roles:
                         HasAccess = 1
-                for id in userGroups:
-                    if id in site_access_groups:
-                        HasAccess = 1     
+                        break
+                for gid in userGroups:
+                    if gid == "":continue
+                    if gid in site_access_groups:
+                        HasAccess = 1
+                        break    
+                if token_user_id in site_access_users:
+                        HasAccess = 1
+                if "-1" in site_access_users:
+                    try:
+                        if urlid == int(token.split("|")[0]):
+                            HasAccess = 1
+                    except Exception as e:
+                        pass
                 if HasAccess:
                     return "200"
                 else:
                     return "401"
-            if int(dr.site_perm_data[perm_indexes[site]][1]) > 0:
+            if dr.site_perm_data[perm_indexes[site]][1] == "1":
                 role_pair = {}
                 group_pair = {}
                 #pair role ids, with permlevels
@@ -114,7 +143,7 @@ def check_site_perm(site, token):
                     if int(group_pair[id]) > permLevel:
                         permLevel = int(group_pair[id])
                     
-                required_perm = int(dr.site_perm_data[perm_indexes[site]][4])
+                required_perm = int(dr.site_perm_data[perm_indexes[site]][5])
                 if permLevel >= required_perm:
                     return "200"
                 else:
@@ -133,6 +162,7 @@ def login(form_data:dict) -> str:
         if dr.users_data[i+1][1] == name:
             userid = int(dr.users_data[i+1][0])
             DoesExist = 1
+            break
     if not DoesExist:
         return "#000000", "#FF0000", "Username or password is wrong", 0
     pwd_hash = hashlib.md5(bytes(password, "UTF-8")).hexdigest()
@@ -144,3 +174,57 @@ def login(form_data:dict) -> str:
                 return "#000000", "#62cc31", "Login Succesful", token
             else:
                 return "#000000", "#FF0000", "Username or password is wrong", 0
+            
+def AddUser(form) -> str:
+    fullname = form["fullname"].strip()
+    username = form["username"].replace(" ", "")
+    password1 = form["password1"].replace(" ", "")
+    password2 = form["password2"].replace(" ", "")
+    email = form["email"].replace(" ", "")
+    description = form["description"].strip()
+    roles = form["roles_post"][:-1]
+    groups = form["groups_post"][:-1]
+    #check if username exists already
+    for i in range(len(dr.users_data)-1):
+        if dr.users_data[i+1][1] == username:
+            return "#000000", "#FF0000", "User already exists"
+    #check if passwords match
+    if password1 != password2:
+        return "#000000", "#FF0000", "The passwords must match!"
+    ## USERS.CSV BEGIN ##
+    #ID,Name,Email, Full name, Description
+    if dr.users_data[-1][0] != "ID":
+        id = int(dr.users_data[-1][0]) + 1
+    else:
+        id = 1    
+    new_users_data = dr.users_data
+    new_users_data.append([str(id), username, email, fullname, description])
+    f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_users_data:
+        writer.writerow(row)
+    f.close()
+    ## USERS.CSV END ##
+
+    ## PWD_HASHES.CSV BEGIN ##
+    #ID,Hash
+    new_hash_data = dr.hash_data
+    new_hash_data.append([str(id), hashlib.md5(password1.encode()).hexdigest()])
+    f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_hash_data:
+        writer.writerow(row)
+    f.close()
+    ## PWD_HASHES.CSV END ##
+
+    ## USER_PERMS.CSV BEGIN ##
+    #ID,RoleIds,GroupIds
+    new_users_data = dr.user_perm_data
+    new_users_data.append([str(id), roles, groups])
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_users_data:
+        writer.writerow(row)
+    f.close()
+    ## USER_PERMS.CSV END ##
+    return "#000000", "#62cc31", "User added succesfully"

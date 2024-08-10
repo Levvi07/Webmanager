@@ -1,0 +1,128 @@
+input{
+    position:static;
+    width:23%;
+    padding-top: 1%;
+    padding-bottom: 1%;
+    border:4px rgb(51, 63, 239) solid;
+    border-radius:30px;
+    font-size:4.5vh;
+    padding-left:1%;
+    padding-right:1%;
+    margin-top:1%;
+}
+
+
+input[type="submit"]{
+    position: absolute;
+    top:63%;
+    left:7%;
+    width:13%;
+    height: 8%;
+    font-size: 24px;
+    margin-left:43%;
+    margin-top:1%;
+    background-color: rgb(51, 63, 239);
+    color:white;
+    border:none;
+    border-radius: 25px;
+}
+
+textarea{
+    position: absolute;
+    top:10%;
+    left:24%;
+    width:25%;     
+    height:30vw;
+    border:4px rgb(51, 63, 239) solid;
+    border-radius: 23px;
+    padding: 1%;
+    font-size:130%;
+    resize: none;
+    font-family: "Helvetica";
+}
+
+select{
+    width: 13%;
+    text-align: center;
+    border:4px rgb(51, 63, 239) solid;
+    height: 8%;
+    border-radius: 23px;
+}
+
+
+tbody{
+    position: absolute;
+    top:10%;
+    width:14%;
+    height:53.9%;
+    border:4px rgb(51, 63, 239) solid;
+    padding: 1%;
+    padding-top: 3%;
+    border-radius: 23px;
+    text-wrap:wrap;
+    word-break: break-all;
+}
+
+button{
+    position: absolute;
+    color: red;
+    font-weight: bold;
+    right:10;
+    background: none;
+    border:none;
+}
+
+p{
+    font-size: 120%;
+    font-family: "Helvetica";
+    position: absolute;
+    top: 10%;
+}
+
+#sel_roles{
+    left:67.5%
+}
+
+#sel_groups{
+    left:85%
+}
+
+td{
+    font-family: "Helvetica";
+    font-size:110%;
+}
+
+#roles_display{
+    left:64%;
+}
+
+#groups_display{
+    left:82%;
+}
+
+#roles_select{
+    position: absolute;
+    left:50%;
+    top:10%
+}
+
+#groups_select{
+    position: absolute;
+    left:50%;
+    top:20%
+}
+
+#response{
+    width:33%;
+    margin-left: 33%;
+    height:auto;
+    border-radius:25px;
+    text-align: center;
+    padding:1%;
+    padding-bottom: 4%;
+    text-wrap:wrap;
+    word-break: break-all;
+    font-size:24px;
+    font-weight: bold;
+    font-family: "Helvetica";
+}

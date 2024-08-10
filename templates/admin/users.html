@@ -1,0 +1,26 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Listing Users</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="/css/users.css">
+    </head>
+    <body>
+        <table>
+            <tbody>
+                <tr><td>ID</td><td>NAME</td></tr>
+                USERS
+            </tbody>
+        </table>
+        <div id="popup">
+            <p id="confirm_text"></p>
+            <input type="checkbox" id="delete_checkbox"> <label>I am sure</label> <br>
+            <button id="delete_link">Delete</button>
+        </div>
+    </body>
+    
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>
+<script src="/js/confirm_delete_user.js"></script>
