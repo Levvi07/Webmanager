@@ -1,8 +1,7 @@
 from flask import Flask
-import os,csv
+import os
 from flask import send_from_directory, request, make_response
-import handle_users, time
-from datetime import datetime,timedelta
+import handle_users
 import data_reader as dr
 dr.init()
 def create_app():
@@ -120,8 +119,23 @@ def AddUser():
         group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>"    
     return serve_html_website("/admin/addUser.html").replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options).replace("RESPONSE", response).replace("FONTCOLOR", font_color).replace("BG_COLOR", bg_color)
 
+@app.route("/admin/remove_user", methods=["POST"])
+def remove_user():
+    perm_code = handle_users.check_site_perm("/admin/remove_user.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "401", {"Refresh": "0; url=/401.html"}
+    id = request.json["userId"]
+    handle_users.remove_user(int(id))
+    print(id)
+    return "asd"
+
 @app.route("/admin/users.html")
 def users():
+    perm_code = handle_users.check_site_perm("/admin/remove_user.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
     users = ""
     for i in range(len(dr.users_data)-1):
         id = dr.users_data[i+1][0]

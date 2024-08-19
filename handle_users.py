@@ -228,3 +228,35 @@ def AddUser(form) -> str:
     f.close()
     ## USER_PERMS.CSV END ##
     return "#000000", "#62cc31", "User added succesfully"
+
+def remove_user(id:int):
+    datas =  {"users":dr.users_data, "pwd_hashes":dr.hash_data, "user_perm":dr.user_perm_data}
+
+    #looping through all 3 datasets
+    for key in datas.keys():
+        #removing line at index `id` as its the same as user_id
+        l = datas[key]
+        l.pop(id)
+        #increasing indexes so there isnt a gap
+        for i in range(len(l)-1):
+            l[i+1][0] = str(i+1)
+        datas[key] = l
+
+        #writing all 3 files
+        f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in datas["users"]:
+            writer.writerow(row)
+        f.close()
+
+        f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in datas["pwd_hashes"]:
+            writer.writerow(row)
+        f.close()
+
+        f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in datas["user_perm"]:
+            writer.writerow(row)
+        f.close()
