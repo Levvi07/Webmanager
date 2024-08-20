@@ -7,12 +7,19 @@
         <link rel="stylesheet", href="/css/users.css">
     </head>
     <body>
+        <div id="table_div">
         <table>
-            <tbody>
-                <tr><td>ID</td><td>NAME</td></tr>
+            <tbody id="users_table">
+                <tr><td class="id_td" style="width:5%;height:3%;text-align:center;font-family:Helvetica">ID</td><td class="name_td" style="text-align:center;font-weight:bold;font-family:Helvetica">NAME</td></tr>
                 USERS
             </tbody>
         </table>
+        </div>
+        <div id="sort_div">
+            <p>Sort By:</p>
+            <input type="radio" name="sort" value="ID" checked="checked">ID <br>
+            <input type="radio" name="sort" value="Name">Name
+        </div>
         <div id="popup">
             <p id="confirm_text"></p>
             <input type="checkbox" id="delete_checkbox"> <label>I am sure</label> <br>
@@ -24,3 +31,4 @@
 <!--Sets the displayed username-->
 <script src="/js/display_user.js"></script>
 <script src="/js/confirm_delete_user.js"></script>
+<script src="/js/users_sort.js"></script>

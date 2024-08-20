@@ -10,7 +10,7 @@ header{
     top:0;
     padding-top: 1%;
     padding-bottom: 0.5%;
-    
+    z-index: 900;
 }
 
 header a{

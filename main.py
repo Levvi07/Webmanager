@@ -139,7 +139,7 @@ def users():
     users = ""
     for i in range(len(dr.users_data)-1):
         id = dr.users_data[i+1][0]
-        users += f"<tr><td>{id}</td><td>{dr.users_data[i+1][1]}</td><td><a href='/modifyuser/{id}'>Modify</a></td><td><button onclick='delete_user({id},\"{dr.users_data[i+1][1]}\")'>Delete User</button></td></tr>"
+        users += f"<tr><td class='id_td'>{id}</td><td class='name_td'>{dr.users_data[i+1][1]}</td><td class='modify_td'><a href='/modifyuser/{id}'>Modify</a></td><td class='del_td'><button onclick='delete_user({id},\"{dr.users_data[i+1][1]}\")'>Delete User</button></td></tr>"
     return serve_html_website("/admin/users.html").replace("USERS", users)    
 
 

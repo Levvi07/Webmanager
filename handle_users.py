@@ -137,9 +137,11 @@ def check_site_perm(site, token):
                 #get highest perm_level of user
                 permLevel = 0
                 for id in userRoles:
+                    if id == "": continue
                     if int(role_pair[id]) > permLevel:
                         permLevel = int(role_pair[id])
                 for id in userGroups:
+                    if id == "": continue
                     if int(group_pair[id]) > permLevel:
                         permLevel = int(group_pair[id])
                     
@@ -186,7 +188,7 @@ def AddUser(form) -> str:
     groups = form["groups_post"][:-1]
     #check if username exists already
     for i in range(len(dr.users_data)-1):
-        if dr.users_data[i+1][1] == username:
+        if dr.users_data[i+1][1].lower() == username.lower():
             return "#000000", "#FF0000", "User already exists"
     #check if passwords match
     if password1 != password2:

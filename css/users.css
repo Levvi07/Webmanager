@@ -1,4 +1,77 @@
 #popup{
     border: 1px black solid;
     display: none;
+    top:21.5%;
+    width:30%;
+    position:sticky;
+    left:5%;
+    padding:1%;
+    padding-top: 0.5%;
+    height:10%;
+}
+
+#sort_div{
+    border: 1px black solid;
+    top:21.5%;
+    width:25%;
+    position:sticky;
+    left:70%;
+    right:5%;
+    padding:1%;
+    padding-top: 0.3%;
+    height:10%;
+}
+
+table{
+    position:absolute;
+    left :41%;
+    border-collapse: collapse;
+    z-index: 0;
+}
+
+td{
+    padding: .5%;
+}
+
+
+td.id_td, td.name_td{
+    border:1px black solid;
+    margin: none;
+}
+
+.id_td{
+    font-weight: bold;
+    background-color: rgb(129, 188, 241);
+}
+
+.name_td{
+    width:300px;
+    background-color:rgb(4, 155, 249);
+}
+
+.modify_td{
+    border: 1px black solid;
+    background-color: rgb(129, 188, 241);
+    width:14%
+}
+
+td > button{
+    border:none;
+    background-color:rgb(4, 155, 249);
+    font-weight:bold;
+    font-family: Helvetica;
+}
+
+.del_td{
+    background-color:rgb(4, 155, 249);
+    border:1px black solid;
+}
+
+
+a{
+    font-family:Helvetica;
+    font-weight: bold;
+    text-decoration: none;
+    color:black;
+    font-size:110%
 }

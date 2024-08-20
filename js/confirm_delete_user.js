@@ -11,7 +11,12 @@ function delete_user(id, name){
     delete_link.setAttribute("onclick" , "confirmed_delete('"+ id + "')")
 }
 
+canDelete = true
 function confirmed_delete(id){
+    if(!canDelete){
+        alert("Wait for the page to refresh!")
+    }
+    canDelete = false
     fetch("/admin/remove_user", {
         method: "POST",
         body: JSON.stringify({
@@ -21,6 +26,9 @@ function confirmed_delete(id){
             "Content-type": "application/json; charset=UTF-8"
         }
     })
+    setTimeout(() => {
+        location.reload()
+    }, 500)
 }
 
 function change_button_disabled(){
