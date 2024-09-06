@@ -153,6 +153,7 @@ def user_page(p):
     id = int(p)
     #update data if its possible
     if request.method == "POST":
+        alert = "Data Changed, Logging out"
         #get data type set by form variable
         rtype = request.form["rtype"]
         if rtype == "uname":
@@ -170,7 +171,8 @@ def user_page(p):
                     new_users_data[id][1] = username
                 else:
                     #insert alert message if the name is still in use
-                    alert += "Username already in use!"
+                    print("username used already")
+                    alert = "Username already in use!"
             if email != dr.users_data[id][2]:
                 new_users_data[id][2] = email
             if full_name != dr.users_data[id][3]:
@@ -182,7 +184,6 @@ def user_page(p):
             for row in new_users_data:
                 writer.writerow(row)
             f.close()
-            alert = "Data Changed, Logging out"
         elif rtype == "pwd":
             new_hash_data = dr.hash_data
             c_pass = request.form["current_pass"]
