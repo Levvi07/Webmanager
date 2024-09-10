@@ -1,0 +1,64 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Edit User</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="/css/admin_user_page.css">
+    </head>
+    <body>
+        <!-- Change regular user data -->
+        <form action="", method="POST" id="dataCH">
+            <input name="rtype" value="uname" style="display:none">
+            <h2 id="user_h2">Change User Data</h2>
+            <p>Full name</p>
+            <input type="text" name="full_name" value="#FULL_NAME#" required> <br>
+            <p>Username</p> 
+            <input type="text" name="username" value="#USERNAME#" required> <br>
+            <p>Email</p>
+            <input type="email" name="email" value="#EMAIL#" required> <br>
+            <input type="submit" id="data_sub" value="Change">
+        </form>
+        <textarea name="description" maxlength="390" placeholder="Description" form="dataCH" required>#DESCRIPTION#</textarea> <br>
+
+        <!-- Change password -->
+        <form action="" method="POST" id="PasswdCH">
+            <input name="rtype" value="pwd" style="display:none">
+            <h2 id="pwd_h2">Change Password</h2>
+            <p class="pwd_p">New Password</p> 
+            <input type="password" name="password1" class="pwd_inp" required> <br>
+            <p class="pwd_p">Confirm New Password</p>
+            <input type="password" name="password2" class="pwd_inp" required> <br>
+            <input type="submit" id="pwd_sub" value="Change Password">
+        </form>
+
+        <form action="" method="POST" id="RolesCH">
+            <input name="rtype" value="roles" style="display:none">
+            <select id="roles_select">  
+                <option value="0">Choose Roles</option>
+                ROLE_OPTIONS
+            </select> <br>
+            <table>
+                <tbody id="roles_display"></tbody>
+            </table>
+            <input type="hidden" name="roles_post" id="roles_post">
+            <input type="submit" value="Update Roles" id="roles_sub">
+        </form>
+
+        <form action="" method="POST" id="GroupCH">
+            <input name="rtype" value="groups" style="display:none">
+            <select id="groups_select">
+                <option value="0">Choose Groups</option>
+                GROUP_OPTIONS
+            </select> <br>
+            <table>
+                <tbody id="groups_display"></tbody>
+            </table>
+            <input type="hidden" name="groups_post" id="groups_post">
+            <input type="submit" value="Update Groups" id="groups_sub">
+        </form>
+    </body>
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>
+<script src="/js/user_rg_select.js"></script>

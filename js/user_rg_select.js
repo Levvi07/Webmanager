@@ -129,6 +129,15 @@ function group_changed(){
     }
 }
 
+function addRoleManually(id){
+    role_select.value = id
+    role_changed()
+}
+function addGroupManually(id){
+    group_select.value = id
+    group_changed()
+}
+
 role_select.addEventListener("change", role_changed)
 group_select.addEventListener("change", group_changed)
 
