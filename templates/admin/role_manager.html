@@ -7,15 +7,24 @@
         <link rel="stylesheet", href="/css/rg_manager.css">
     </head>
     <body>
+        <form action="./admin/changeRoles" name="mainform"></form>
         <table>
             <tr><td>ID</td><td>Role Name</td><td>Role Description</td><td class="perm_lvl_field">Permission Level</td></tr>
             <tbody id="data_table">
-                <tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button>X</button></td></tr>
-                <tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button>X</button></td></tr>
+                <!-- <tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr> -->
+                ROLES
             </tbody>
         </table>
+        <input type="submit" value="Apply Changes"> <br>
+        <div id="sort_div">
+            <p>Sort By:</p>
+            <input type="radio" name="sort" value="ID" checked="checked">ID<br>
+            <input type="radio" name="sort" value="Name">Role Name<br>
+            <input type="radio" name="sort" value="Perm_level">Permission Level
+        </div>
+        </form>
     </body>
-    
 </html>
 <!--Sets the displayed username-->
 <script src="/js/display_user.js"></script>
+<script src="/js/rg_sort.js"></script>

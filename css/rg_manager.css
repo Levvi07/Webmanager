@@ -11,10 +11,12 @@ td{
     font-size: 200%;
     padding-left:2vw;
     padding-right:2vw;
+    padding-bottom:0vw;
 }
 
 table {
-    border-spacing: 20px;
+    border-spacing: 10px 0;
+    top:10%;
 }
 
 input{
@@ -23,18 +25,55 @@ input{
     border:2px solid rgb(51, 63, 239);
     border-radius: 25px;
     font-size:100%;
-    padding:1%;
+    padding:2%;
 }
 
 td > button{
+    margin-top:4%;
     border:none;
     background-color:rgb(4, 155, 249);
     font-weight:bold;
     font-family: Helvetica;
-    font-size:64%;
+    font-size:84%;
+    border-radius: 25px;
+    padding:16%;
 }
 
 #del_btn{
     position: absolute;
     left:70%;
+}
+
+input[type="submit"]{
+    width:14%;
+    margin-top:4%;
+    border:none;
+    background-color:rgb(4, 155, 249);
+    font-weight:bold;
+    font-family: Helvetica;
+    font-size:200%;
+    border-radius: 25px;
+    position:sticky;
+    bottom:80%;
+    left:90%;
+}
+
+#sort_div{
+    border: 2px  solid rgb(51, 63, 239);
+    border-radius:25px;
+    bottom:60%;
+    width:17%;
+    position:sticky;
+    left:80%;
+    padding:1%;
+    padding-top: 0.3%;
+    height:15%;
+    font-weight:bold;
+    font-size:160%;
+}
+
+input[type="radio"]{
+    margin:none;
+    padding:none;
+    width:10%;
 }

@@ -319,6 +319,21 @@ def admin_user_page(p):
     ret += "</script>"        
     return ret
     
+#role manager
+@app.route("/admin/role_manager.html")
+def role_manager():
+    perm_code = handle_users.check_site_perm("/admin/role_manager.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+
+    #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
+    role_lines = ""
+    for i in range(len(dr.roles_data)-1):
+        row = dr.roles_data[i+1]
+        role_lines += f'<tr><td id="ID">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}"></td><td id="role_desc"><input type="text" value="{row[3]}"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}"></td><td id="del_btn"><button onclick="delete_role({row[0]})">Delete</button></td></tr>'
+
+    return serve_html_website("/admin/role_manager.html").replace("ROLES", role_lines)
 
 #handle any other static site
 @app.route('/<path:p>')

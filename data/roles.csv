@@ -6,3 +6,15 @@ Role ID,Role Permission Level,Role Name,Role Description
 5,5,Admins3,Administrators
 6,1,Users3,Basic User role
 7,1,123456789012345678,asfdasdsa
+8,6,Admins,Administrators
+9,1,Users,Basic User role
+10,5,Admins2,Administrators
+11,1,Users2,Basic User role
+12,5,Admins3,Administrators
+13,1,Users3,Basic User role
+14,1,123456789012345678,asfdasdsa
+15,6,Admins,Administrators
+16,1,Users,Basic User role
+17,5,Admins2,Administrators
+18,1,Users2,Basic User role
+19,5,Admins3,Administrators
