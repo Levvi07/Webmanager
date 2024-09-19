@@ -130,20 +130,21 @@ def check_site_perm(site, token):
                 group_pair = {}
                 #pair role ids, with permlevels
                 for i in range(len(dr.roles_data)-1):
-                    role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][1]
+                    role_pair[int(dr.roles_data[i+1][0])] = int(dr.roles_data[i+1][1])
                 #pair group ids, with permlevels
                 for i in range(len(dr.groups_data)-1):
-                    group_pair[dr.groups_data[i+1][0]] = dr.groups_data[i+1][1]
+                    group_pair[int(dr.groups_data[i+1][0])] = int(dr.groups_data[i+1][1])
                 #get highest perm_level of user
                 permLevel = 0
-                for id in userRoles:
-                    if id == "": continue
-                    if int(role_pair[id]) > permLevel:
-                        permLevel = int(role_pair[id])
+                for rid in userRoles:
+                    if rid == "": continue
+                    if int(role_pair[int(rid)]) > permLevel:
+                        print("perm level: ", rid)
+                        permLevel = int(role_pair[int(rid)])
                 for id in userGroups:
                     if id == "": continue
-                    if int(group_pair[id]) > permLevel:
-                        permLevel = int(group_pair[id])
+                    if int(group_pair[int(id)]) > permLevel:
+                        permLevel = int(group_pair[int(id)])
                     
                 required_perm = int(dr.site_perm_data[perm_indexes[site]][5])
                 if permLevel >= required_perm:

@@ -337,14 +337,14 @@ def role_manager():
 
 @app.route("/admin/deleteRole/<path:id>")
 def deleteRole(id):
-    perm_code = handle_users.check_site_perm("/admin/deleteRole/" + id, request.cookies.get("token"))
+    perm_code = handle_users.check_site_perm("/admin/deleteRole/" + str(id), request.cookies.get("token"))
     if perm_code == "401":
         print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     
     #delete role
     new_role_data = dr.roles_data
-    new_role_data.pop(id)
+    new_role_data.pop(int(id))
 
     #delete role from users who have it
     new_user_data = dr.user_perm_data
@@ -352,15 +352,44 @@ def deleteRole(id):
         #[i+1][1] for roles, [i+1][2] for groups
         if id in new_user_data[i+1][1].split(";"):
             roles = new_user_data[i+1][1].split(";")
-            roles.pop(roles.index)
+            roles.pop(roles.index(id))
+            new_user_data[i+1][1] = roles
 
+    #record the old, and new indexes of roles, so we can reassing roles for users later (to avoid a role's id shifting)
+    index_pairs = {}
     #reindex existing roles
     ind = 1
     for i in range(len(new_role_data)-1):
+        index_pairs[new_role_data[i+1][0]] = ind
         new_role_data[i+1][0] = ind
         ind += 1
 
-    return "", {"Refresh": "0; url=/admin/role_manager.html"}
+    print(index_pairs)
+
+    #replace user perm role indexes with new ones
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        roles = new_user_data[i+1][1].split(";")
+        new_roles = ""
+        for r in roles:
+            new_roles += str(index_pairs[r]) + ";"
+        new_roles[:-1]
+        new_user_data[i+1][1] = new_roles    
+        print(roles)
+
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_data:
+                writer.writerow(row)
+            f.close()
+
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_role_data:
+                writer.writerow(row)
+            f.close()            
+
+    return "Refreshing!", {"Refresh": "0; url=/admin/role_manager.html"}
 
 #handle any other static site
 @app.route('/<path:p>')
