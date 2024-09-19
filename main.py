@@ -331,9 +331,36 @@ def role_manager():
     role_lines = ""
     for i in range(len(dr.roles_data)-1):
         row = dr.roles_data[i+1]
-        role_lines += f'<tr><td id="ID">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}"></td><td id="role_desc"><input type="text" value="{row[3]}"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}"></td><td id="del_btn"><button onclick="delete_role({row[0]})">Delete</button></td></tr>'
+        role_lines += f'<tr><td id="ID">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}"></td><td id="role_desc"><input type="text" value="{row[3]}"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteRole/{row[0]}\'">Delete</button></td></tr>'
 
     return serve_html_website("/admin/role_manager.html").replace("ROLES", role_lines)
+
+@app.route("/admin/deleteRole/<path:id>")
+def deleteRole(id):
+    perm_code = handle_users.check_site_perm("/admin/deleteRole/" + id, request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    
+    #delete role
+    new_role_data = dr.roles_data
+    new_role_data.pop(id)
+
+    #delete role from users who have it
+    new_user_data = dr.user_perm_data
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        if id in new_user_data[i+1][1].split(";"):
+            roles = new_user_data[i+1][1].split(";")
+            roles.pop(roles.index)
+
+    #reindex existing roles
+    ind = 1
+    for i in range(len(new_role_data)-1):
+        new_role_data[i+1][0] = ind
+        ind += 1
+
+    return "", {"Refresh": "0; url=/admin/role_manager.html"}
 
 #handle any other static site
 @app.route('/<path:p>')

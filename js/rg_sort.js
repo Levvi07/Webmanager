@@ -57,7 +57,6 @@ function UpdateSorts(){
     for(i=0; i<allLvLs.length; i++){
         max = Math.max(...allLvLs)
         keys.forEach(element => {
-            console.log(element.split("_")[0])
             if (parseInt(element.split("_")[0]) == max){
                 Perm_sort += perm_obj[element]
             }
