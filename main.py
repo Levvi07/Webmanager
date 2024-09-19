@@ -369,27 +369,30 @@ def deleteRole(id):
     #replace user perm role indexes with new ones
     for i in range(len(new_user_data)-1):
         #[i+1][1] for roles, [i+1][2] for groups
-        roles = new_user_data[i+1][1].split(";")
+        roles = new_user_data[i+1][1]
+        print("roles: ", roles)
+        if type(roles) != list:
+            roles = roles.split(";")
         new_roles = ""
         for r in roles:
             new_roles += str(index_pairs[r]) + ";"
-        new_roles[:-1]
+        new_roles = new_roles[:-1]
         new_user_data[i+1][1] = new_roles    
-        print(roles)
+        print("nroles: ", new_roles)
 
     f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
-            writer = csv.writer(f)
-            for row in new_user_data:
-                writer.writerow(row)
-            f.close()
+    writer = csv.writer(f)
+    for row in new_user_data:
+        writer.writerow(row)
+    f.close()
 
     f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
-            writer = csv.writer(f)
-            for row in new_role_data:
-                writer.writerow(row)
-            f.close()            
+    writer = csv.writer(f)
+    for row in new_role_data:
+        writer.writerow(row)
+    f.close()            
 
-    return "Refreshing!", {"Refresh": "0; url=/admin/role_manager.html"}
+    return "Refreshing!", {"Refresh": "5; url=/admin/role_manager.html"}
 
 #handle any other static site
 @app.route('/<path:p>')

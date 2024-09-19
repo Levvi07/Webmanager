@@ -139,7 +139,6 @@ def check_site_perm(site, token):
                 for rid in userRoles:
                     if rid == "": continue
                     if int(role_pair[int(rid)]) > permLevel:
-                        print("perm level: ", rid)
                         permLevel = int(role_pair[int(rid)])
                 for id in userGroups:
                     if id == "": continue
