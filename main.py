@@ -331,7 +331,7 @@ def role_manager():
     role_lines = ""
     for i in range(len(dr.roles_data)-1):
         row = dr.roles_data[i+1]
-        role_lines += f'<tr><td id="ID">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}"></td><td id="role_desc"><input type="text" value="{row[3]}"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteRole/{row[0]}\'">Delete</button></td></tr>'
+        role_lines += f'<tr><td id="ID" name="r{str(row[0])}_id">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}" name="r{str(row[0])}_name"></td><td id="role_desc"><input type="text" value="{row[3]}" name="r{str(row[0])}_desc"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}" name="r{str(row[0])}_perm"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteRole/{row[0]}\'">Delete</button></td></tr>'
 
     return serve_html_website("/admin/role_manager.html").replace("ROLES", role_lines)
 
@@ -394,6 +394,26 @@ def deleteRole(id):
 
     return "Refreshing!", {"Refresh": "5; url=/admin/role_manager.html"}
 
+@app.route("/admin/changeRoles", methods=["POST"])
+def changeRoles():
+    perm_code = handle_users.check_site_perm("/admin/changeRoles", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    
+    form = request.form
+    n_of_errors = 0
+    existing_role_names = []
+    errors = ""
+    new_roles = dr.roles_data
+    for i in range(len(new_roles)-1):
+        existing_role_names.append(new_roles[i+1][2])
+    for s in form:
+        id = int(s.split("_")[0].replace("r", ""))
+
+
+    return "asd"
+
 #handle any other static site
 @app.route('/<path:p>')
 def static_sites(p):
@@ -404,6 +424,5 @@ def static_sites(p):
         return serve_html_website(p)
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
-
-
+    
 app.run(debug=True)
