@@ -331,7 +331,7 @@ def role_manager():
     role_lines = ""
     for i in range(len(dr.roles_data)-1):
         row = dr.roles_data[i+1]
-        role_lines += f'<tr><td id="ID" name="r{str(row[0])}_id">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}" name="r{str(row[0])}_name"></td><td id="role_desc"><input type="text" value="{row[3]}" name="r{str(row[0])}_desc"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}" name="r{str(row[0])}_perm"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteRole/{row[0]}\'">Delete</button></td></tr>'
+        role_lines += f'<tr><td id="ID" name="r{str(row[0])}_id">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}" name="r{str(row[0])}_name"></td><td id="role_desc"><input type="text" value="{row[3]}" name="r{str(row[0])}_desc"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}" name="r{str(row[0])}_perm"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteRole/{row[0]}\'" type="button">Delete</button></td></tr>'
 
     return serve_html_website("/admin/role_manager.html").replace("ROLES", role_lines)
 
@@ -406,13 +406,37 @@ def changeRoles():
     existing_role_names = []
     errors = ""
     new_roles = dr.roles_data
-    for i in range(len(new_roles)-1):
-        existing_role_names.append(new_roles[i+1][2])
+
     for s in form:
         id = int(s.split("_")[0].replace("r", ""))
+        rtype = s.split("_")[1]
+        if rtype == "desc":
+            new_roles[id][3] = form[s]
+        if rtype == "perm":
+            new_roles[id][1] = form[s]
+        if rtype == "name":
+            existing_role_names.append(form[s])
+            if form[s] in existing_role_names:
+                if existing_role_names.count(form[s]) == 1:
+                    new_roles[id][2] = form[s]
+                else:
+                    n_of_errors += 1
+                    errors += "Name Already Taken: " + form[s] + "<br>"
+            else:
+                new_roles[id][2] = form[s]
 
 
-    return "asd"
+    if n_of_errors == 0:
+        f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in new_roles:
+            writer.writerow(row)
+        f.close()
+        return "No Errors! Changes saved successfully!, redirecting in 4 seconds...", {"Refresh":"4;url=/admin/role_manager.html"}
+    elif n_of_errors <= 3:
+        return errors + "3 or less errors, redirecting in 10 seconds...", {"Refresh":"10;url=/admin/role_manager.html"}
+    else:
+        return errors + "more than 3 errors, no redirection <br> <a href='/admin/role_manager.html'>Go Back To Role Manager Page</a>"    
 
 #handle any other static site
 @app.route('/<path:p>')
