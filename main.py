@@ -438,6 +438,125 @@ def changeRoles():
     else:
         return errors + "more than 3 errors, no redirection <br> <a href='/admin/role_manager.html'>Go Back To Role Manager Page</a>"    
 
+#group manager
+@app.route("/admin/group_manager.html")
+def group_manager():
+    perm_code = handle_users.check_site_perm("/admin/group_manager.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+
+    #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
+    group_lines = ""
+    for i in range(len(dr.groups_data)-1):
+        row = dr.groups_data[i+1]
+        group_lines += f'<tr><td id="ID" name="r{str(row[0])}_id">{str(row[0])}</td><td id="group_name"><input type="text" value="{row[2]}" name="r{str(row[0])}_name"></td><td id="group_desc"><input type="text" value="{row[3]}" name="r{str(row[0])}_desc"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}" name="r{str(row[0])}_perm"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteGroup/{row[0]}\'" type="button">Delete</button></td></tr>'
+
+    return serve_html_website("/admin/group_manager.html").replace("GROUPS", group_lines)
+
+#delete group
+@app.route("/admin/deleteGroup/<path:id>")
+def deleteGroup(id):
+    perm_code = handle_users.check_site_perm("/admin/deleteGroup/" + str(id), request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    
+    #delete group
+    new_group_data = dr.groups_data
+    new_group_data.pop(int(id))
+
+    #delete group from users who have it
+    new_user_data = dr.user_perm_data
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        if id in new_user_data[i+1][2].split(";"):
+            groups = new_user_data[i+1][2].split(";")
+            groups.pop(groups.index(id))
+            new_user_data[i+1][2] = groups
+
+    #record the old, and new indexes of roles, so we can reassing roles for users later (to avoid a role's id shifting)
+    index_pairs = {}
+    #reindex existing roles
+    ind = 1
+    for i in range(len(new_group_data)-1):
+        index_pairs[new_group_data[i+1][0]] = ind
+        new_group_data[i+1][0] = ind
+        ind += 1
+
+    print(index_pairs)
+
+    #replace user perm group indexes with new ones
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        groups = new_user_data[i+1][2]
+        if type(groups) != list:
+            groups = groups.split(";")
+        new_groups = ""
+        for r in groups:
+            new_groups += str(index_pairs[r]) + ";"
+        new_groups = new_groups[:-1]
+        new_user_data[i+1][2] = new_groups
+
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_user_data:
+        writer.writerow(row)
+    f.close()
+
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_group_data:
+        writer.writerow(row)
+    f.close() 
+
+    return "Refreshing!", {"Refresh": "5; url=/admin/group_manager.html"}    
+
+#change groups
+@app.route("/admin/changeGroups", methods=["POST"])
+def changeGroups():
+    perm_code = handle_users.check_site_perm("/admin/changeGroups", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    
+    form = request.form
+    n_of_errors = 0
+    existing_group_names = []
+    errors = ""
+    new_groups = dr.groups_data
+
+    for s in form:
+        id = int(s.split("_")[0].replace("r", ""))
+        rtype = s.split("_")[1]
+        if rtype == "desc":
+            new_groups[id][3] = form[s]
+        if rtype == "perm":
+            new_groups[id][1] = form[s]
+        if rtype == "name":
+            existing_group_names.append(form[s])
+            if form[s] in existing_group_names:
+                if existing_group_names.count(form[s]) == 1:
+                    new_groups[id][2] = form[s]
+                else:
+                    n_of_errors += 1
+                    errors += "Name Already Taken: " + form[s] + "<br>"
+            else:
+                new_groups[id][2] = form[s]
+
+
+    if n_of_errors == 0:
+        f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in new_groups:
+            writer.writerow(row)
+        f.close()
+        return "No Errors! Changes saved successfully!, redirecting in 4 seconds...", {"Refresh":"4;url=/admin/group_manager.html"}
+    elif n_of_errors <= 3:
+        return errors + "3 or less errors, redirecting in 10 seconds...", {"Refresh":"10;url=/admin/group_manager.html"}
+    else:
+        return errors + "more than 3 errors, no redirection <br> <a href='/admin/group_manager.html'>Go Back To Role Manager Page</a>"
+
 #handle any other static site
 @app.route('/<path:p>')
 def static_sites(p):

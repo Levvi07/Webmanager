@@ -1,0 +1,30 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Modify groups</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="/css/rg_manager.css">
+    </head>
+    <body>
+        <form action="/admin/changeGroups" method="POST">
+        <table>
+            <tr><td>ID</td><td>Group Name</td><td>Group Description</td><td class="perm_lvl_field">Permission Level</td></tr>
+            <!-- <tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr> -->
+            <tbody id="data_table">
+                GROUPS
+            </tbody>
+        </table>
+        <input type="submit" value="Apply Changes">
+        </form>
+        <div id="sort_div">
+            <p>Sort By:</p>
+            <input type="radio" name="sort" value="ID" checked="checked">ID<br>
+            <input type="radio" name="sort" value="Name">Group Name<br>
+            <input type="radio" name="sort" value="Perm_level">Permission Level
+        </div>
+    </body>
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>
+<script src="/js/rg_sort.js"></script>
