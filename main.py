@@ -560,6 +560,10 @@ def changeGroups():
 #add role post
 @app.route("/admin/add_role.html", methods=["POST"])
 def add_role_post():
+    perm_code = handle_users.check_site_perm("/admin/add_role.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
     form = request.form
     name = form["name"]
     desc = form["desc"]
@@ -592,6 +596,10 @@ def add_role_post():
 #add group post
 @app.route("/admin/add_group.html", methods=["POST"])
 def add_group_post():
+    perm_code = handle_users.check_site_perm("/admin/add_group.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
     form = request.form
     name = form["name"]
     desc = form["desc"]
@@ -620,6 +628,39 @@ def add_group_post():
         writer.writerow(row)
     f.close()
     return "group Added! Redirecting in 5...", {"Refresh":"5;url=/admin/add_group.html"}    
+
+#handle site perms list page
+@app.route("/admin/site_perms.html")
+def site_perms():
+    perm_code = handle_users.check_site_perm("/admin/site_perms.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    perms = ""
+    for i in range(len(dr.site_perm_data)-1):
+        endpoint = dr.site_perm_data[i+1][0]
+        #ENDPOINTS MUST START WITH /
+        perms += f"<tr><td class='endpoint_td'>{endpoint}</td><td class='al_td'>{dr.site_perm_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modify_site_perm/{endpoint}'>Modify</a></td><td class='del_td'><button onclick=\"location.href=\'/admin/delete_site_perm/{endpoint[1:]}\'\">Delete Rule</button></td></tr>"
+    return serve_html_website("/admin/site_perms.html").replace("PERMS", perms)
+
+#delete site perm rule
+@app.route("/admin/delete_site_perm/<path:p>")
+def delete_site_perm(p):
+    perm_code = handle_users.check_site_perm("/admin/delete_site_perm/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    new_site_perms = [dr.site_perm_data[0]]
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] != "/" + p:
+            new_site_perms.append(dr.site_perm_data[i+1])
+    
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_site_perms:
+        writer.writerow(row)
+    f.close()
+    return "Changes Made! Refreshing...", {"Refresh":"6;url=/admin/site_perms.html"}        
 
 #handle any other static site
 @app.route('/<path:p>')

@@ -1,0 +1,80 @@
+table{
+    position:absolute;
+    left :0%;
+    border-collapse: collapse;
+    z-index: 0;
+}
+
+td{
+    padding: .5%;
+}
+
+
+td.endpoint_td, td.al_td{
+    border:1px black solid;
+    margin: none;
+    text-align: center;
+    font-weight: bold;
+}
+
+.endpoint_td{
+    font-weight: bold;
+    background-color: rgb(129, 188, 241);
+    font-size:140%;
+}
+
+.al_td{
+    width:6%;
+    background-color:rgb(4, 155, 249);
+    color:rgb(200,200,200);
+    font-size:140%;
+}
+
+.modify_td{
+    border: 1px black solid;
+    background-color: rgb(129, 188, 241);
+    width:5%;
+    text-align: center;
+}
+
+td > button{
+    border:none;
+    background-color:rgb(4, 155, 249);
+    font-weight:bolder;
+    font-family: Helvetica;
+    text-align: center;
+    color:rgb(200,200,200);
+    width:auto;
+    font-size:140%;
+}
+
+.del_td{
+    background-color:rgb(4, 155, 249);
+    border:1px black solid;
+    text-align: center;
+    color:white;
+    width:10%;
+}
+
+
+a{
+    font-family:Helvetica;
+    font-weight: bold;
+    text-decoration: none;
+    color:black;
+    font-size:110%
+}
+
+#addrule{
+    padding:1%;
+    border-radius: 25px;
+    position: sticky;
+    left:50%;
+    top:9%;
+    border:none;
+    background-color:rgb(4, 155, 249);
+    font-weight:bolder;
+    font-family: Helvetica;
+    text-align: center;
+    color:rgb(200,200,200);
+}
