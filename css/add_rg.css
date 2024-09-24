@@ -1,0 +1,36 @@
+td{
+    font-size: 200%;
+    padding-left:1vw;
+    padding-right:2vw;
+    padding-bottom:0vw;
+    width:39%;
+}
+
+th{
+    font-size: 200%;
+    margin-right:100000000%;
+    width:39%;
+}
+
+input[type="submit"]{
+    width:14% !important;
+    margin-top:4%;
+    border:none;
+    background-color:rgb(4, 155, 249);
+    font-weight:bold;
+    font-family: Helvetica;
+    font-size:200%;
+    border-radius: 25px;
+    position:sticky;
+    bottom:70%;
+    left:50%;
+}
+
+input{
+    font-family: Helvetica;
+    width: 100%;
+    border:2px solid rgb(51, 63, 239);
+    border-radius: 25px;
+    font-size:100%;
+    padding:1%;
+}

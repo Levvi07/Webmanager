@@ -77,3 +77,25 @@ input[type="radio"]{
     padding:none;
     width:10%;
 }
+
+a#AddLink{
+    text-decoration: none;
+    color:black;
+    margin-left:21%;
+    font-family: "Helvetica";
+    font-size:210%;
+    font-weight: bold;
+}
+
+div#AddLink{
+    position: absolute;
+    left: 88%;
+    bottom:45%;
+    width:10%;
+    height:4%;
+    padding:1%;
+    border-radius: 25px;
+    background-color: rgb(4, 155, 249);
+    color:black;
+    text-decoration: none;
+}

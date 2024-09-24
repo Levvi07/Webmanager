@@ -557,6 +557,70 @@ def changeGroups():
     else:
         return errors + "more than 3 errors, no redirection <br> <a href='/admin/group_manager.html'>Go Back To Role Manager Page</a>"
 
+#add role post
+@app.route("/admin/add_role.html", methods=["POST"])
+def add_role_post():
+    form = request.form
+    name = form["name"]
+    desc = form["desc"]
+    perm = form["perm_level"]
+
+    #if no perm is specified we just block the role
+    if perm == "":
+        perm = "-1"
+
+    new_roles = dr.roles_data
+    existing_names = []
+
+    for i in range(len(new_roles)-1):
+        existing_names.append(new_roles[i+1][2])
+
+    if name in existing_names:
+        return "Name is Already Taken! Redirecting in 5...", {"Refresh":"5;url=/admin/add_role.html"}
+    
+    id = len(new_roles)
+
+    new_row = [str(id), str(perm), name, desc]
+    new_roles.append(new_row)
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_roles:
+        writer.writerow(row)
+    f.close()
+    return "Role Added! Redirecting in 5...", {"Refresh":"5;url=/admin/add_role.html"}
+
+#add group post
+@app.route("/admin/add_group.html", methods=["POST"])
+def add_group_post():
+    form = request.form
+    name = form["name"]
+    desc = form["desc"]
+    perm = form["perm_level"]
+
+    #if no perm is specified we just block the role
+    if perm == "":
+        perm = "-1"
+
+    new_groups = dr.groups_data
+    existing_names = []
+
+    for i in range(len(new_groups)-1):
+        existing_names.append(new_groups[i+1][2])
+
+    if name in existing_names:
+        return "Name is Already Taken! Redirecting in 5...", {"Refresh":"5;url=/admin/add_group.html"}
+    
+    id = len(new_groups)
+
+    new_row = [str(id), str(perm), name, desc]
+    new_groups.append(new_row)
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_groups:
+        writer.writerow(row)
+    f.close()
+    return "group Added! Redirecting in 5...", {"Refresh":"5;url=/admin/add_group.html"}    
+
 #handle any other static site
 @app.route('/<path:p>')
 def static_sites(p):
