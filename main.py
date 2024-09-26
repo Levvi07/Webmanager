@@ -640,7 +640,7 @@ def site_perms():
     for i in range(len(dr.site_perm_data)-1):
         endpoint = dr.site_perm_data[i+1][0]
         #ENDPOINTS MUST START WITH /
-        perms += f"<tr><td class='endpoint_td'>{endpoint}</td><td class='al_td'>{dr.site_perm_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modify_site_perm/{endpoint}'>Modify</a></td><td class='del_td'><button onclick=\"location.href=\'/admin/delete_site_perm/{endpoint[1:]}\'\">Delete Rule</button></td></tr>"
+        perms += f"<tr><td class='endpoint_td'>{endpoint}</td><td class='al_td'>{dr.site_perm_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modify_site_perm/{endpoint[1:]}'>Modify</a></td><td class='del_td'><button onclick=\"location.href=\'/admin/delete_site_perm/{endpoint[1:]}\'\">Delete Rule</button></td></tr>"
     return serve_html_website("/admin/site_perms.html").replace("PERMS", perms)
 
 #delete site perm rule
@@ -661,6 +661,53 @@ def delete_site_perm(p):
         writer.writerow(row)
     f.close()
     return "Changes Made! Refreshing...", {"Refresh":"6;url=/admin/site_perms.html"}        
+
+#Modify site permissions
+@app.route("/admin/modify_site_perm/<path:p>")
+def modify_site_perm(p):
+    perm_code = handle_users.check_site_perm("/admin/modify_site_perm/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+
+    row = ""
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] == "/" + p:
+            row = dr.site_perm_data[i+1]
+    if row == "":
+        return "Rule doesnt exist!", {"Refresh":"6;url=/admin/site_perms.html"}
+    accessLevel = row[1]
+    roleIDs = row[2]
+    groupIDs = row[3]
+    userIDs = row[4]
+    pl = row[5]
+    role_pair = {}
+    group_pair = {}
+    user_pair = {}
+    roles = ""
+    groups = ""
+    users = ""
+
+    for i in range(len(dr.roles_data)-1):
+        role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][2]
+
+    for i in range(len(dr.groups_data)-1):
+        group_pair[dr.groups_data[i+1][0]] = dr.groups_data[i+1][2]
+
+    for i in range(len(dr.users_data)-1):
+        user_pair[dr.users_data[i+1][0]] = dr.users_data[i+1][1]
+
+    print(role_pair, group_pair, user_pair)
+
+    for id in role_pair.keys():
+        roles += f"<option value='{id}'>{role_pair[id]}</option>"
+    for id in group_pair.keys():
+        groups += f"<option value='{id}'>{group_pair[id]}</option>"
+    for id in user_pair.keys():
+        users += f"<option value='{id}'>{user_pair[id]}</option>"        
+
+    return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl)
+    
 
 #handle any other static site
 @app.route('/<path:p>')
