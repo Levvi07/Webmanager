@@ -1,3 +1,26 @@
-p{
+p, select, input{
     display: inline;
+    margin-top:1%;
+    border-radius:25px;
+    border:1px solid blue;
+    padding:0.5%;
+
 }
+
+p{
+    left:2%;
+    margin-left:3%;
+    border:none !important;
+    font-weight: bold;
+}
+
+select{
+    margin-left: 3%;
+    width: 18%;
+}
+
+input{
+    margin-left: 3%;
+    width:4%;
+}
+

@@ -684,9 +684,9 @@ def modify_site_perm(p):
     role_pair = {}
     group_pair = {}
     user_pair = {}
-    roles = ""
-    groups = ""
-    users = ""
+    roles = "<tr>"
+    groups = "<tr>"
+    users = "<tr>"
 
     for i in range(len(dr.roles_data)-1):
         role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][2]
@@ -697,14 +697,12 @@ def modify_site_perm(p):
     for i in range(len(dr.users_data)-1):
         user_pair[dr.users_data[i+1][0]] = dr.users_data[i+1][1]
 
-    print(role_pair, group_pair, user_pair)
-
     for id in role_pair.keys():
         roles += f"<option value='{id}'>{role_pair[id]}</option>"
     for id in group_pair.keys():
         groups += f"<option value='{id}'>{group_pair[id]}</option>"
     for id in user_pair.keys():
-        users += f"<option value='{id}'>{user_pair[id]}</option>"        
+        users += f"<option value='{id}'>{user_pair[id]}</option>"
 
     return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl)
     
