@@ -687,6 +687,8 @@ def modify_site_perm(p):
     roles = "<tr>"
     groups = "<tr>"
     users = "<tr>"
+    ACCESSLEVELS
+    #const, only used for converting AL ids to text and zurück 
 
     for i in range(len(dr.roles_data)-1):
         role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][2]
@@ -703,7 +705,7 @@ def modify_site_perm(p):
         groups += f"<option value='{id}'>{group_pair[id]}</option>"
     for id in user_pair.keys():
         users += f"<option value='{id}'>{user_pair[id]}</option>"
-
+    users += f"<option value='-1'>Per User Pages</option>"
     return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl)
     
 

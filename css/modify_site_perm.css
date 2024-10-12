@@ -7,6 +7,14 @@ p, select, input{
 
 }
 
+.headers_s{
+    margin-left:3%;
+}
+
+.headers_m{
+    margin-left:15%;
+}
+
 p{
     left:2%;
     margin-left:3%;
