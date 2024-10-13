@@ -1,18 +1,38 @@
-p, select, input{
+select, input{
     display: inline;
     margin-top:1%;
     border-radius:25px;
-    border:1px solid blue;
+    border:1px solid rgb(51, 63, 239);
     padding:0.5%;
 
 }
 
 .headers_s{
-    margin-left:3%;
+    margin-left:9.5%;
 }
 
-.headers_m{
+.headers_roles{
+    margin-left:5%;
+}
+
+.headers_groups{
+    margin-left:16%;
+}
+
+.headers_users{
     margin-left:15%;
+}
+
+.headers_perm{
+    margin-left:16%;
+}
+
+#endpoint{
+    width:20% !important;
+}
+
+#AL{
+    width:10%;
 }
 
 p{
@@ -20,15 +40,26 @@ p{
     margin-left:3%;
     border:none !important;
     font-weight: bold;
+    display: inline;
+    margin-top:1%;
+    padding:0.5%;
 }
 
 select{
-    margin-left: 3%;
+    margin-left: 1%;
     width: 18%;
 }
 
 input{
-    margin-left: 3%;
+    margin-left: 2%;
     width:4%;
+}
+
+input[type="submit"]{
+    position: relative !important;
+    color:white;
+    background: rgb(51, 63, 239);
+    width:8%;
+    left:45%;
 }
 

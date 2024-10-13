@@ -1,3 +1,4 @@
 endpoint,AccesLevel,access_roles_id,access_groups_id,access_users_id,perm_level
 /admin/*,1,1,1,,6
 /user/*,0,,,-1,79
+/annydasdnasdnaskgksaf/asdasdsadasdsa/,-1,,,-1,68
