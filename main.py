@@ -725,6 +725,11 @@ def modify_site_perm(p):
 
 @app.route("/admin/modify_perm/", methods=["POST"])
 def modify_perm():
+    perm_code = handle_users.check_site_perm("/admin/modify_perm/", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+
     form = request.form
     endpoint = form["endpoint"]
     AL = form["AL"]
@@ -748,8 +753,74 @@ def modify_perm():
     for row in new_perms:
         writer.writerow(row)
     f.close()
-    return "Rule modified!"
+    return "Rule modified!", {"Refresh": "0; url=/admin/site_perms.html"}
 
+#add site permissions
+@app.route("/admin/add_site_perm.html")
+def add_site_perm():
+    perm_code = handle_users.check_site_perm("/admin/ADDmodify_site_perm.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+
+    role_pair = {}
+    group_pair = {}
+    user_pair = {}
+    roles = ""
+    groups = ""
+    users = ""
+    al = "<option value='-1' selected>Disabled</option><option value='0'>Role/Group/User limit</option><option value='1'>Access set by perm level</option>"
+
+    for i in range(len(dr.roles_data)-1):
+        role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][2]
+
+    for i in range(len(dr.groups_data)-1):
+        group_pair[dr.groups_data[i+1][0]] = dr.groups_data[i+1][2]
+
+    for i in range(len(dr.users_data)-1):
+        user_pair[dr.users_data[i+1][0]] = dr.users_data[i+1][1]
+
+    for id in role_pair.keys():
+        roles += f"<option value='{id}'>{role_pair[id]}</option>"
+    for id in group_pair.keys():
+        groups += f"<option value='{id}'>{group_pair[id]}</option>"
+    for id in user_pair.keys():
+        users += f"<option value='{id}'>{user_pair[id]}</option>"
+    users += f"<option value='-1'>Per User Pages</option>"
+
+    return serve_html_website("/admin/add_site_perm.html").replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("ACCESSLEVEL", al)
+    
+
+@app.route("/admin/add_perm/", methods=["POST"])
+def add_perm():
+    form = request.form
+    endpoint = form["endpoint"]
+    al = form["AL"]
+    roles = form["roles_post"][:-1]
+    groups = form["groups_post"][:-1]
+    users = form["users_post"][:-1]
+    pl = form["perm_level"]
+
+    if endpoint == "":
+        return "Endpoint must not be empty!", {"Refresh":"4;url=/admin/site_perms.html"}
+    if endpoint[0] != "/":
+        return "Endpoint must start with /", {"Refresh":"4;url=/admin/site_perms.html"}
+    DoesExist = 0
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] == endpoint:
+            DoesExist = 1
+    if DoesExist:
+        return "A rule for this endpoint is already in place!", {"Refresh":"4;url=/admin/site_perms.html"}           
+    
+    #actually adding it
+    new_perms = dr.site_perm_data
+    new_perms.append([endpoint, al, roles, groups, users, pl])
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_perms:
+        writer.writerow(row)
+    f.close()
+    return "Perm added succesfully!", {"Refresh":"4;url=/admin/site_perms.html"}
 
 #handle any other static site
 @app.route('/<path:p>')
