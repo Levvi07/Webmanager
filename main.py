@@ -723,6 +723,34 @@ def modify_site_perm(p):
     return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl).replace("ACCESSLEVEL", al) + manual_adds
     
 
+@app.route("/admin/modify_perm/", methods=["POST"])
+def modify_perm():
+    form = request.form
+    endpoint = form["endpoint"]
+    AL = form["AL"]
+    #truncating of extra ;
+    roles = form["roles_post"][:-1]
+    groups = form["groups_post"][:-1]
+    users = form["users_post"][:-1]
+    perm_level = form["perm_level"]
+    
+    new_perms = dr.site_perm_data
+    print(new_perms)
+    for i in range(len(new_perms)-1):
+        if new_perms[i+1][0] == endpoint:
+            new_perms[i+1][1] = AL
+            new_perms[i+1][2] = roles
+            new_perms[i+1][3] = groups
+            new_perms[i+1][4] = users
+            new_perms[i+1][5] = perm_level
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_perms:
+        writer.writerow(row)
+    f.close()
+    return "Rule modified!"
+
+
 #handle any other static site
 @app.route('/<path:p>')
 def static_sites(p):
