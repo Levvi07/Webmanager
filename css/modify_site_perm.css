@@ -35,6 +35,29 @@ select, input{
     width:10%;
 }
 
+#roles_display{
+    top:17.5%;
+    left:34.4%;
+}
+
+#groups_display{
+    top:17.5%;
+    left:53.7%;
+}
+
+#users_display{
+    top:17.5%;
+    left:73%;
+}
+
+tbody{
+    width:16%;
+    height:40%;
+    position: absolute !important;
+    border:1px solid rgb(51, 63, 239);
+    border-radius: 25px;
+    padding:1%;
+}
 p{
     left:2%;
     margin-left:3%;
@@ -56,10 +79,20 @@ input{
 }
 
 input[type="submit"]{
-    position: relative !important;
+    position: absolute !important;
     color:white;
     background: rgb(51, 63, 239);
     width:8%;
-    left:45%;
+    left:57%;
+    top:63%;
+}
+
+button{
+    position: absolute;
+    color: red;
+    font-weight: bold;
+    right:10;
+    background: none;
+    border:none;
 }
 

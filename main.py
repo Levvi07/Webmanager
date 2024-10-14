@@ -707,9 +707,20 @@ def modify_site_perm(p):
         users += f"<option value='{id}'>{user_pair[id]}</option>"
     users += f"<option value='-1'>Per User Pages</option>"
 
+    manual_adds = "<script>"
+    #rendering already used groups roles etc
+    for id in roleIDs.split(";"):
+        if id == "":continue
+        manual_adds += f"addRoleManually({id});"
+    for id in groupIDs.split(";"):
+        if id == "":continue
+        manual_adds += f"addGroupManually({id});"
+    for id in userIDs.split(";"):
+        if id == "":continue
+        manual_adds += f"addUserManually({id});"
 
-
-    return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl).replace("ACCESSLEVEL", al)
+    manual_adds += "</script>"
+    return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl).replace("ACCESSLEVEL", al) + manual_adds
     
 
 #handle any other static site

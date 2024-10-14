@@ -9,7 +9,20 @@
     <body>
         <form action="/admin/modify_perm/" method="POST">
             <p class="headers_s">Endpoint</p> <p class="headers_s">Access Level</p> <p class="headers_roles">Roles</p> <p class="headers_groups">Groups</p> <p class="headers_users">Users</p> <p class="headers_perm">Permission Level</p> <br>
-            <input id="endpoint" name="endpoint" value="ENDPOINT" readonly> <select name="AL" id="AL">ACCESSLEVEL</select> <select name="roles_select">ROLES</select> <select name="groups_select">GROUPS</select> <select name="users_select">USERS</select> <input type="number" name="perm_level" value=PERMLEVEL> <br>
+            <input id="endpoint" name="endpoint" value="ENDPOINT" readonly> <select name="AL" id="AL">ACCESSLEVEL</select> <select name="roles_select" id="roles_select"><option value="0">Choose Role</option>ROLES</select> <select name="groups_select" id="groups_select"><option value="0">Choose Group</option>GROUPS</select> <select name="users_select" id="users_select"><option value="0">Choose User</option>USERS</select> <input type="number" name="perm_level" value=PERMLEVEL> <br>
+            <br>
+            <table>
+                <tbody id="roles_display"></tbody>
+            </table>
+            <table>
+                <tbody id="groups_display"></tbody>
+            </table>
+            <table>
+                <tbody id="users_display"></tbody>
+            </table> <br>
+            <input type="hidden" name="roles_post" id="roles_post">
+            <input type="hidden" name="groups_post" id="groups_post">
+            <input type="hidden" name="users_post" id="users_post">
             <input type="submit" value="Apply Changes" id="submit">
         </form>
     </body>
@@ -17,3 +30,5 @@
 </html>
 <!--Sets the displayed username-->
 <script src="/js/display_user.js"></script>
+<script src="/js/user_rg_select.js"></script>
+<script src="/js/modify_perm_user.js"></script>
