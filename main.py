@@ -854,12 +854,24 @@ def del_conf(p):
         return "", {"Refresh": "0; url=/401.html"}
     f = open("./data/site_configs.json")
     newfile = ""
-    for line in f.read():
+    DoesExist = 0
+    for line in f.readlines():
         try:
-            if p in line.split(":"):
-
+            print(repr(line.split(":")[0].replace("\"", "").replace(" ", "")), "----", repr(p), p == line.split(":")[0].replace("\"", "").replace(" ", ""))
+            if p != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                newfile += line
+            else:
+                DoesExist = 1
         except:
             pass
+    if not DoesExist:
+        return "Config does not exist!", {"Refresh": "3; url=/admin/change_config.html"}
+    newfile = newfile.replace(",\n}", "\n}")
+    f.close()
+    f = open("./data/site_configs.json", "w")
+    f.write(newfile)
+    f.close()
+    return "Changes made!", {"Refresh": "3; url=/admin/change_config.html"}
 
 #handle any other static site
 @app.route('/<path:p>')
