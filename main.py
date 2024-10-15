@@ -758,7 +758,7 @@ def modify_perm():
 #add site permissions
 @app.route("/admin/add_site_perm.html")
 def add_site_perm():
-    perm_code = handle_users.check_site_perm("/admin/ADDmodify_site_perm.html", request.cookies.get("token"))
+    perm_code = handle_users.check_site_perm("/admin/add_site_perm.html", request.cookies.get("token"))
     if perm_code == "401":
         print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
@@ -793,6 +793,12 @@ def add_site_perm():
 
 @app.route("/admin/add_perm/", methods=["POST"])
 def add_perm():
+    perm_code = handle_users.check_site_perm("/admin/add_perm.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+
+
     form = request.form
     endpoint = form["endpoint"]
     al = form["AL"]
@@ -821,6 +827,39 @@ def add_perm():
         writer.writerow(row)
     f.close()
     return "Perm added succesfully!", {"Refresh":"4;url=/admin/site_perms.html"}
+
+@app.route("/admin/change_config.html")
+def config_page():
+    perm_code = handle_users.check_site_perm("/admin/change_config.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    
+    conf = open("./data/site_configs.json").read()
+    confdict = {}
+    for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
+        confdict[pair.split(":")[0].replace(" ", "")] = pair.split(":")[1].replace(" ", "")
+    
+    #reusing it
+    conf = ""
+    for key in confdict.keys():
+        conf += f"{key} = <input value='{confdict[key]}' name='{key}'> <a href='/admin/delete_config/{key}'>Delete</a><br>"
+    return serve_html_website("/admin/change_config.html").replace("CONFIGS", conf)
+
+@app.route("/admin/delete_config/<path:p>")
+def del_conf(p):
+    perm_code = handle_users.check_site_perm("/admin/delete_config.html", request.cookies.get("token"))
+    if perm_code == "401":
+        print("not allowed")
+        return "", {"Refresh": "0; url=/401.html"}
+    f = open("./data/site_configs.json")
+    newfile = ""
+    for line in f.read():
+        try:
+            if p in line.split(":"):
+
+        except:
+            pass
 
 #handle any other static site
 @app.route('/<path:p>')
