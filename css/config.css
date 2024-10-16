@@ -1,0 +1,10 @@
+a#add{
+    position:absolute;
+    border:1px solid rgb(51, 63, 239);
+    background-color: rgb(51, 63, 239);
+    border-radius: 25px;
+    color:white;
+    padding:0.5%;
+    top: 15%;
+    right:10%;
+}
