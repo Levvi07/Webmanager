@@ -2,13 +2,16 @@
 <header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
 <html>
     <head>
-        <title>TITLE</title>
+        <title>Adding config rule</title>
         <link rel="stylesheet", href="/css/main_style.css">
         <link rel="stylesheet", href="/css/add_config.css">
     </head>
     <body>
-        <label>Key</label><label>Value</label> <br>
-        <input type="text" name="k"><input type="text" name="v">
+        <form action="/admin/add_conf/" method="POST">
+            <label>Key</label><label>Value</label> <br>
+            <input type="text" name="k"><input type="text" name="v"> <br>
+            <input type="submit" value="Add Rule">
+        </form>
     </body>
     
 </html>

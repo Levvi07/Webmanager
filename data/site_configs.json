@@ -1,5 +1,4 @@
 {
-    "TokenExpire":"3600",
-    "RefreshDataFrequency":"2",
-    "MockConfig":"Helloo"
+"TokenExpire":"43200",
+"RefreshDataFrequency":"2"
 }

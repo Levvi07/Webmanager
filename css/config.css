@@ -5,6 +5,27 @@ a#add{
     border-radius: 25px;
     color:white;
     padding:0.5%;
+    top: 22%;
+    right:10%;
+    text-decoration: none;
+    font-size:140%;
+    font-family: "Helvetica";
+}
+
+input[type="submit"]{
+    font-size:140%;
+    position:absolute;
+    border:1px solid rgb(51, 63, 239);
+    background-color: rgb(51, 63, 239);
+    border-radius: 25px;
+    color:white;
+    padding:0.5%;
     top: 15%;
     right:10%;
+    font-family: "Helvetica";
+}
+
+a{
+    text-decoration: none;
+    color:black
 }

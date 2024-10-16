@@ -1,5 +1,5 @@
 from flask import Flask
-import os
+import os, json
 from flask import send_from_directory, request, make_response
 import handle_users, csv, hashlib
 import data_reader as dr
@@ -123,18 +123,15 @@ def AddUser():
 def remove_user():
     perm_code = handle_users.check_site_perm("/admin/remove_user.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "401", {"Refresh": "0; url=/401.html"}
     id = request.json["userId"]
     handle_users.remove_user(int(id))
-    print(id)
     return "asd"
 
 @app.route("/admin/users.html")
 def users():
     perm_code = handle_users.check_site_perm("/admin/users.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     users = ""
     for i in range(len(dr.users_data)-1):
@@ -148,7 +145,6 @@ def user_page(p):
     alert = ""
     perm_code = handle_users.check_site_perm("/user/"+p, request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     id = int(p)
     #update data if its possible
@@ -171,7 +167,6 @@ def user_page(p):
                     new_users_data[id][1] = username
                 else:
                     #insert alert message if the name is still in use
-                    print("username used already")
                     alert = "Username already in use!"
             if email != dr.users_data[id][2]:
                 new_users_data[id][2] = email
@@ -220,7 +215,6 @@ def admin_user_page(p):
     alert = ""
     perm_code = handle_users.check_site_perm("/admin/modifyUser/"+p, request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     id = int(p)
     #update data if its possible
@@ -243,7 +237,6 @@ def admin_user_page(p):
                     new_users_data[id][1] = username
                 else:
                     #insert alert message if the name is still in use
-                    print("username used already")
                     alert = "Username already in use!"
             if email != dr.users_data[id][2]:
                 new_users_data[id][2] = email
@@ -307,7 +300,6 @@ def admin_user_page(p):
         ret += "<script>alert('"+ alert +"')</script>"
     #get roles and groups of user, inject them trough js
     user_roles = dr.user_perm_data[id][1].split(";")
-    print(user_roles)
     user_groups = dr.user_perm_data[id][2].split(";")
     ret += "<script>"
     for role_id in user_roles:
@@ -324,7 +316,6 @@ def admin_user_page(p):
 def role_manager():
     perm_code = handle_users.check_site_perm("/admin/role_manager.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
 
     #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
@@ -339,7 +330,6 @@ def role_manager():
 def deleteRole(id):
     perm_code = handle_users.check_site_perm("/admin/deleteRole/" + str(id), request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     
     #delete role
@@ -364,13 +354,11 @@ def deleteRole(id):
         new_role_data[i+1][0] = ind
         ind += 1
 
-    print(index_pairs)
 
     #replace user perm role indexes with new ones
     for i in range(len(new_user_data)-1):
         #[i+1][1] for roles, [i+1][2] for groups
         roles = new_user_data[i+1][1]
-        print("roles: ", roles)
         if type(roles) != list:
             roles = roles.split(";")
         new_roles = ""
@@ -378,7 +366,6 @@ def deleteRole(id):
             new_roles += str(index_pairs[r]) + ";"
         new_roles = new_roles[:-1]
         new_user_data[i+1][1] = new_roles    
-        print("nroles: ", new_roles)
 
     f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
     writer = csv.writer(f)
@@ -398,7 +385,6 @@ def deleteRole(id):
 def changeRoles():
     perm_code = handle_users.check_site_perm("/admin/changeRoles", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     
     form = request.form
@@ -443,7 +429,6 @@ def changeRoles():
 def group_manager():
     perm_code = handle_users.check_site_perm("/admin/group_manager.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
 
     #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
@@ -459,7 +444,6 @@ def group_manager():
 def deleteGroup(id):
     perm_code = handle_users.check_site_perm("/admin/deleteGroup/" + str(id), request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     
     #delete group
@@ -484,7 +468,6 @@ def deleteGroup(id):
         new_group_data[i+1][0] = ind
         ind += 1
 
-    print(index_pairs)
 
     #replace user perm group indexes with new ones
     for i in range(len(new_user_data)-1):
@@ -517,7 +500,6 @@ def deleteGroup(id):
 def changeGroups():
     perm_code = handle_users.check_site_perm("/admin/changeGroups", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     
     form = request.form
@@ -562,7 +544,6 @@ def changeGroups():
 def add_role_post():
     perm_code = handle_users.check_site_perm("/admin/add_role.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     form = request.form
     name = form["name"]
@@ -598,7 +579,6 @@ def add_role_post():
 def add_group_post():
     perm_code = handle_users.check_site_perm("/admin/add_group.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     form = request.form
     name = form["name"]
@@ -634,7 +614,6 @@ def add_group_post():
 def site_perms():
     perm_code = handle_users.check_site_perm("/admin/site_perms.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     perms = ""
     for i in range(len(dr.site_perm_data)-1):
@@ -648,7 +627,6 @@ def site_perms():
 def delete_site_perm(p):
     perm_code = handle_users.check_site_perm("/admin/delete_site_perm/" + p, request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     new_site_perms = [dr.site_perm_data[0]]
     for i in range(len(dr.site_perm_data)-1):
@@ -667,7 +645,6 @@ def delete_site_perm(p):
 def modify_site_perm(p):
     perm_code = handle_users.check_site_perm("/admin/modify_site_perm/" + p, request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
 
     row = ""
@@ -727,7 +704,6 @@ def modify_site_perm(p):
 def modify_perm():
     perm_code = handle_users.check_site_perm("/admin/modify_perm/", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
 
     form = request.form
@@ -740,7 +716,6 @@ def modify_perm():
     perm_level = form["perm_level"]
     
     new_perms = dr.site_perm_data
-    print(new_perms)
     for i in range(len(new_perms)-1):
         if new_perms[i+1][0] == endpoint:
             new_perms[i+1][1] = AL
@@ -760,7 +735,6 @@ def modify_perm():
 def add_site_perm():
     perm_code = handle_users.check_site_perm("/admin/add_site_perm.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
 
     role_pair = {}
@@ -795,7 +769,6 @@ def add_site_perm():
 def add_perm():
     perm_code = handle_users.check_site_perm("/admin/add_perm.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
 
 
@@ -832,7 +805,7 @@ def add_perm():
 def config_page():
     perm_code = handle_users.check_site_perm("/admin/change_config.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
+        
         return "", {"Refresh": "0; url=/401.html"}
     
     conf = open("./data/site_configs.json").read()
@@ -850,14 +823,12 @@ def config_page():
 def del_conf(p):
     perm_code = handle_users.check_site_perm("/admin/delete_config.html", request.cookies.get("token"))
     if perm_code == "401":
-        print("not allowed")
         return "", {"Refresh": "0; url=/401.html"}
     f = open("./data/site_configs.json")
     newfile = ""
     DoesExist = 0
     for line in f.readlines():
         try:
-            print(repr(line.split(":")[0].replace("\"", "").replace(" ", "")), "----", repr(p), p == line.split(":")[0].replace("\"", "").replace(" ", ""))
             if p != line.split(":")[0].replace("\"", "").replace(" ", ""):
                 newfile += line
             else:
@@ -872,6 +843,59 @@ def del_conf(p):
     f.write(newfile)
     f.close()
     return "Changes made!", {"Refresh": "3; url=/admin/change_config.html"}
+
+@app.route("/admin/add_conf/", methods=["POST"])
+def add_conf():
+    perm_code = handle_users.check_site_perm("/admin/add_conf", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    key = request.form["k"]
+    value = request.form["v"]
+    if " " in key:
+        return "Key must not contain spaces!", {"Refresh": "4; url=/admin/add_config.html"}
+    f = open("./data/site_configs.json")
+    conf = json.loads(f.read())
+    f.close()
+    if key in conf.keys():
+        return "Config already exists!", {"Refresh": "3;/admin/add_config.html"}
+    #actually defining the value
+    conf[key] = value
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(conf)
+    keys = list(conf)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{conf[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "Config added!", {"Refresh": "3;/admin/change_config.html"}
+
+@app.route("/admin/change_conf/", methods=["POST"])
+def change_conf():
+    perm_code = handle_users.check_site_perm("/admin/change_conf", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+
+    conf = request.form
+
+    jsonobj = "{\n"
+    clen = len(conf)
+    keys = list(conf)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{conf[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "Config added!", {"Refresh": "3;/admin/change_config.html"}
 
 #handle any other static site
 @app.route('/<path:p>')
