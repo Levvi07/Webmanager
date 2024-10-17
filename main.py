@@ -27,6 +27,14 @@ def favicon():
                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
 #handle index.html
 @app.route("/")
@@ -36,6 +44,14 @@ def index():
         return serve_html_website("index.html")    
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
 #handle signout
 @app.route("/signout.html")
@@ -43,6 +59,14 @@ def signout():
     perm_code = handle_users.check_site_perm('/signout.html', request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     token = request.cookies.get("token")
     if token == None:
@@ -57,6 +81,14 @@ def css(p):
     perm_code = handle_users.check_site_perm("/css/"+p, request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     if not os.path.exists("./css/"+p):
         return "No such file"
@@ -69,15 +101,19 @@ def js(p):
     perm_code = handle_users.check_site_perm("/js/" + p, request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     if not os.path.exists("./js/"+p):
         return "alert('Missing JS file:" + p + "')"
     f = open("./js/"+p)
-    perm_code = handle_users.check_site_perm("/js/" + p, request.cookies.get("token"))
-    if perm_code == "200":
-        return f.read()
-    if perm_code == "401":
-        return "", {"Refresh": "0; url=/401.html"}
+    return f.read()
 
 #handle login_post
 @app.route("/login.html", methods=['POST'])
@@ -85,6 +121,14 @@ def handle_login():
     perm_code = handle_users.check_site_perm("/login.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     CookieToken = request.cookies.get("token")
     font_color, bg_color, response, token = handle_users.login(request.form)
@@ -105,6 +149,14 @@ def AddUser():
     perm_code = handle_users.check_site_perm("/admin/addUser.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     #handle post
     bg_color = "#FFFFFF"
     font_color = "#FFFFFF"
@@ -124,6 +176,14 @@ def remove_user():
     perm_code = handle_users.check_site_perm("/admin/remove_user.html", request.cookies.get("token"))
     if perm_code == "401":
         return "401", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     id = request.json["userId"]
     handle_users.remove_user(int(id))
     return "asd"
@@ -133,6 +193,14 @@ def users():
     perm_code = handle_users.check_site_perm("/admin/users.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     users = ""
     for i in range(len(dr.users_data)-1):
         id = dr.users_data[i+1][0]
@@ -146,6 +214,14 @@ def user_page(p):
     perm_code = handle_users.check_site_perm("/user/"+p, request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     id = int(p)
     #update data if its possible
     if request.method == "POST":
@@ -216,6 +292,14 @@ def admin_user_page(p):
     perm_code = handle_users.check_site_perm("/admin/modifyUser/"+p, request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     id = int(p)
     #update data if its possible
     if request.method == "POST":
@@ -317,6 +401,14 @@ def role_manager():
     perm_code = handle_users.check_site_perm("/admin/role_manager.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
     #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
     role_lines = ""
@@ -331,6 +423,14 @@ def deleteRole(id):
     perm_code = handle_users.check_site_perm("/admin/deleteRole/" + str(id), request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     #delete role
     new_role_data = dr.roles_data
@@ -386,6 +486,14 @@ def changeRoles():
     perm_code = handle_users.check_site_perm("/admin/changeRoles", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     form = request.form
     n_of_errors = 0
@@ -430,6 +538,14 @@ def group_manager():
     perm_code = handle_users.check_site_perm("/admin/group_manager.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
     #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
     group_lines = ""
@@ -445,6 +561,14 @@ def deleteGroup(id):
     perm_code = handle_users.check_site_perm("/admin/deleteGroup/" + str(id), request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     #delete group
     new_group_data = dr.groups_data
@@ -501,6 +625,14 @@ def changeGroups():
     perm_code = handle_users.check_site_perm("/admin/changeGroups", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     form = request.form
     n_of_errors = 0
@@ -545,6 +677,14 @@ def add_role_post():
     perm_code = handle_users.check_site_perm("/admin/add_role.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     form = request.form
     name = form["name"]
     desc = form["desc"]
@@ -580,6 +720,14 @@ def add_group_post():
     perm_code = handle_users.check_site_perm("/admin/add_group.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     form = request.form
     name = form["name"]
     desc = form["desc"]
@@ -615,6 +763,14 @@ def site_perms():
     perm_code = handle_users.check_site_perm("/admin/site_perms.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     perms = ""
     for i in range(len(dr.site_perm_data)-1):
         endpoint = dr.site_perm_data[i+1][0]
@@ -628,6 +784,14 @@ def delete_site_perm(p):
     perm_code = handle_users.check_site_perm("/admin/delete_site_perm/" + p, request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     new_site_perms = [dr.site_perm_data[0]]
     for i in range(len(dr.site_perm_data)-1):
         if dr.site_perm_data[i+1][0] != "/" + p:
@@ -646,6 +810,14 @@ def modify_site_perm(p):
     perm_code = handle_users.check_site_perm("/admin/modify_site_perm/" + p, request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
     row = ""
     for i in range(len(dr.site_perm_data)-1):
@@ -705,6 +877,14 @@ def modify_perm():
     perm_code = handle_users.check_site_perm("/admin/modify_perm/", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
     form = request.form
     endpoint = form["endpoint"]
@@ -728,7 +908,7 @@ def modify_perm():
     for row in new_perms:
         writer.writerow(row)
     f.close()
-    return "Rule modified!", {"Refresh": "0; url=/admin/site_perms.html"}
+    return "Rule modified!", {"Refresh": "2; url=/admin/site_perms.html"}
 
 #add site permissions
 @app.route("/admin/add_site_perm.html")
@@ -736,6 +916,14 @@ def add_site_perm():
     perm_code = handle_users.check_site_perm("/admin/add_site_perm.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
     role_pair = {}
     group_pair = {}
@@ -770,6 +958,14 @@ def add_perm():
     perm_code = handle_users.check_site_perm("/admin/add_perm.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
 
     form = request.form
@@ -781,9 +977,9 @@ def add_perm():
     pl = form["perm_level"]
 
     if endpoint == "":
-        return "Endpoint must not be empty!", {"Refresh":"4;url=/admin/site_perms.html"}
+        return "Endpoint must not be empty!", {"Refresh":"2;url=/admin/site_perms.html"}
     if endpoint[0] != "/":
-        return "Endpoint must start with /", {"Refresh":"4;url=/admin/site_perms.html"}
+        return "Endpoint must start with /", {"Refresh":"2;url=/admin/site_perms.html"}
     DoesExist = 0
     for i in range(len(dr.site_perm_data)-1):
         if dr.site_perm_data[i+1][0] == endpoint:
@@ -799,14 +995,21 @@ def add_perm():
     for row in new_perms:
         writer.writerow(row)
     f.close()
-    return "Perm added succesfully!", {"Refresh":"4;url=/admin/site_perms.html"}
+    return "Perm added succesfully!", {"Refresh":"2;url=/admin/site_perms.html"}
 
 @app.route("/admin/change_config.html")
 def config_page():
     perm_code = handle_users.check_site_perm("/admin/change_config.html", request.cookies.get("token"))
     if perm_code == "401":
-        
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
     conf = open("./data/site_configs.json").read()
     confdict = {}
@@ -824,6 +1027,14 @@ def del_conf(p):
     perm_code = handle_users.check_site_perm("/admin/delete_config.html", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     f = open("./data/site_configs.json")
     newfile = ""
     DoesExist = 0
@@ -849,6 +1060,14 @@ def add_conf():
     perm_code = handle_users.check_site_perm("/admin/add_conf", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     key = request.form["k"]
     value = request.form["v"]
     if " " in key:
@@ -873,13 +1092,21 @@ def add_conf():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
-    return "Config added!", {"Refresh": "3;/admin/change_config.html"}
+    return "Config added!", {"Refresh": "2;/admin/change_config.html"}
 
 @app.route("/admin/change_conf/", methods=["POST"])
 def change_conf():
     perm_code = handle_users.check_site_perm("/admin/change_conf", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
 
     conf = request.form
 
@@ -895,7 +1122,7 @@ def change_conf():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
-    return "Config added!", {"Refresh": "3;/admin/change_config.html"}
+    return "Config changed!", {"Refresh": "2;/admin/change_config.html"}
 
 #handle any other static site
 @app.route('/<path:p>')
@@ -907,5 +1134,13 @@ def static_sites(p):
         return serve_html_website(p)
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
     
 app.run(debug=True)

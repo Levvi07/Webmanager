@@ -22,3 +22,5 @@ in this case the given id may be provided access too
 You can add/delete/modify configs through the website, be vary not to delete these system configs (or else, things WILL break):
  TokenExpire: Sets the amount of time, login tokens are valid for (seconds)
  RefreshDataFrequency: Tells the data reader, how often it should refresh its contents
+ PageDisabledSite: Users get redirected here when a page is disabled
+ UserDisabledSite: Disabled users get redirected here

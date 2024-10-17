@@ -83,7 +83,9 @@ def check_site_perm(site, token):
     if not isPresent:
         return "200"
     if dr.site_perm_data[perm_indexes[site]][1] == "-1":
-        return "401"
+        #page is disabled
+        return "403"
+    
     
     if token != None:
         valid = validate_token(token)
@@ -106,14 +108,16 @@ def check_site_perm(site, token):
                 token_user_id = token.split("|")[0]
                 for id in userRoles:
                     if dr.roles_data[int(id)][1] == "-1":
-                        return "401"
+                        #user is disabled (http code for "Locked")
+                        return "423"
                     if id == "":continue
                     if id in site_access_roles:
                         HasAccess = 1
                         break
                 for gid in userGroups:
                     if dr.groups_data[int(gid)][1] == "-1":
-                        return "401"
+                        #user is disabled (http code for "Locked")
+                        return "423"
                     if gid == "":continue
                     if gid in site_access_groups:
                         HasAccess = 1
@@ -145,14 +149,18 @@ def check_site_perm(site, token):
                     if rid == "": continue
                     #decline access if a disabled role is on the user
                     if int(role_pair[int(rid)]) == -1:
-                        return "401"
+                        #user is disabled (http code for "Locked")
+                        return "423"
+                        print("disabled")
                     if int(role_pair[int(rid)]) > permLevel:
                         permLevel = int(role_pair[int(rid)])
                 for id in userGroups:
                     if id == "": continue
                     #decline access if a disabled group is on the user
                     if int(group_pair[int(id)]) == -1:
-                        return "401"
+                        print("disabled")
+                        #user is disabled (http code for "Locked")
+                        return "423"
                     if int(group_pair[int(id)]) > permLevel:
                         permLevel = int(group_pair[int(id)])
                     
