@@ -20,6 +20,7 @@ in this case the given id may be provided access too
 
 - You can use the internal configuration file through the data_reader, as you please  \
 You can add/delete/modify configs through the website, be vary not to delete these system configs (or else, things WILL break):  \
+
  TokenExpire: Sets the amount of time, login tokens are valid for (seconds)  \
  RefreshDataFrequency: Tells the data reader, how often it should refresh its contents  \
  PageDisabledSite: Users get redirected here when a page is disabled  \
