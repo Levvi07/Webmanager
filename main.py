@@ -3,10 +3,48 @@ import os, json
 from flask import send_from_directory, request, make_response
 import handle_users, csv, hashlib
 import data_reader as dr
+import importlib
 dr.init()
 def create_app():
     app = Flask(__name__)
     return app
+
+#function for loading/reloading plugins
+pluginlist = []
+Imported_plugins = {}
+def reload_plugins():
+    global Imported_plugins
+    dr.add_plugin_config("RESET")
+    Imported_plugins = {}
+    #getting all the plugins
+    pluginlist = os.listdir("./plugins")
+    if "__init__.py" in pluginlist:
+        pluginlist.pop(pluginlist.index("__init__.py"))
+    if "__pycache__" in pluginlist:
+        pluginlist.pop(pluginlist.index("__pycache__"))
+
+    #initialising all the __plugin_init__.py files (this is the standard file containing the page functions and all that)
+    for name in pluginlist:
+        try:
+            Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
+            if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
+                print(f"Wont import module {name} because 'name' field is empty (See PluginData class)")
+                Imported_plugins[name] = None
+        except:
+            print(f"Cant initalise module '{name}' because __plugin_init__.py is not present")
+    #importing plugin configs
+    for name in Imported_plugins.keys():
+        print("curdir", os.curdir)
+        if os.path.exists(f"./plugins/{name}/global_configs.json"):
+            #import configs
+            print("WE HAVE PLUGIN CONFIGS")
+            f = open(f"./plugins/{name}/global_configs.json", "r")
+            dr.add_plugin_config(json.loads(f.read()))
+            f.close()
+        else:
+            print(f"global plugin configs for {name} dont exist")    
+#loading plugins before execution
+reload_plugins()
 
 def serve_html_website(route):
     if not os.path.exists("./templates/" + route):
@@ -1123,6 +1161,34 @@ def change_conf():
     f.write(jsonobj)
     f.close()
     return "Config changed!", {"Refresh": "2;/admin/change_config.html"}
+
+#plugins with subfolder
+@app.route("/plugins/<path:p>")
+def plugin_site_handler(p):
+    perm_code = handle_users.check_site_perm("/admin/change_conf", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    print("got this path:" + p)
+
+    if "/" not in p:
+        return "", {"Refresh":"0;url=/404.html"}
+    plname = p.split("/")[0]
+    endp = "/" + "/".join(p.split("/")[1:])
+    print("Imported_pl", Imported_plugins)
+    for k in Imported_plugins.keys():
+        print("dk", repr(k))
+    print("pl", repr(plname))
+    return Imported_plugins[plname].load_site(endp)
+
 
 #handle any other static site
 @app.route('/<path:p>')

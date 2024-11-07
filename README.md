@@ -29,9 +29,11 @@ You can add/delete/modify configs through the website, be vary not to delete the
  ### Plugins
 
 - Plugins may have any number and structure of folders
-- It MUST have a main python file with the name of the plugin (for Template_plugin, you have to name it Template_plugin.py)
-- In the main python file, you may import other local python files, and access your assets using ./
-- It has to contain the subroutines for your website, alongside any other subroutines you may want to implement
+- It MUST have an init python file named \__plugin_init__.py
+- In the main python file, you may import other local python files, and access your assets, but u may have to use /plugins/PLUGINNAME/...
+- It has to contain the subroutines for your endpoint
 - Upon startup, the server is going to initialise all plugins, but active reloading is not implemented (too resource heavy), if a  plugin is changed, press "Reload Plugin" on the plugins page
 - Plugins are to be placed in the "plugins" folder in a subfolder, holding the name of the plugin
 - All actions are logged in /log/PLUGINNAME_log.txt in the webservice's root folde
+- You may set configs for the plugins. You must create a file called "global_configs.json" and write the config as  {"key":value} (standard JSON format)
+- You can change the configs trough the plugins' page

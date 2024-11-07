@@ -4,9 +4,10 @@ tokens_data = []
 hash_data = []
 user_perm_data = []
 site_perm_data = []
-site_config_data = []
+site_config_data = {}
 roles_data = []
 groups_data = []
+plugin_configs = {}
 
 checksums = {}
 
@@ -89,12 +90,15 @@ def refresh_site_perms_data():
 
 def refresh_site_config_data():
     global site_config_data
+    global plugin_configs
     site_config_file = open("./data/site_configs.json", encoding="UTF-8")
     content = site_config_file.read()
     site_config_data = json.loads(content)
     checksums["site_configs.json"] = hashlib.md5(content.encode()).hexdigest()
     site_config_file.close()
-
+    #adding plugin configs on top of normal configs
+    site_config_data = {**site_config_data, **plugin_configs}
+    print(site_config_data)
 
 def refresh_roles_data():
     global roles_data
@@ -134,6 +138,16 @@ funcs = {
     "groups.csv":refresh_groups_data
 }
 
+# This function is for adding configs manually
+# this way we can add plugin configs to the array, but we can keep them in seperate files
+def add_plugin_config(json):
+    global plugin_configs
+    #plugins are getting reloaded, clear dict
+    if json == "RESET":
+        plugin_configs = {}
+        return
+    plugin_configs = {**plugin_configs, **json}
+    refresh_site_config_data()
 
 def init():
     for key in funcs.keys():
