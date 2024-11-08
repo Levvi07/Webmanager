@@ -34,7 +34,6 @@ def reload_plugins():
             print(f"Cant initalise module '{name}' because __plugin_init__.py is not present")
     #importing plugin configs
     for name in Imported_plugins.keys():
-        print("curdir", os.curdir)
         if os.path.exists(f"./plugins/{name}/global_configs.json"):
             #import configs
             print("WE HAVE PLUGIN CONFIGS")
@@ -1162,6 +1161,11 @@ def change_conf():
     f.close()
     return "Config changed!", {"Refresh": "2;/admin/change_config.html"}
 
+#plugin manager website
+@app.route("/admin/plugin_manager.html")
+def plugin_manager():
+    return "WIP"
+
 #plugins with subfolder
 @app.route("/plugins/<path:p>")
 def plugin_site_handler(p):
@@ -1178,7 +1182,6 @@ def plugin_site_handler(p):
         return "", {"Refresh":f"0;url={website}"}
     
     print("got this path:" + p)
-
     if "/" not in p:
         return "", {"Refresh":"0;url=/404.html"}
     plname = p.split("/")[0]
@@ -1187,7 +1190,7 @@ def plugin_site_handler(p):
     for k in Imported_plugins.keys():
         print("dk", repr(k))
     print("pl", repr(plname))
-    return Imported_plugins[plname].load_site(endp)
+    return Imported_plugins[plname].load_site(endp, request)
 
 
 #handle any other static site

@@ -29,7 +29,7 @@ def serve_html_website(route):
     f = open(f"./{pl_path}templates/{route}")
     return f.read()
 
-def load_site(endpoint):
+def load_site(endpoint, request):
     print("endp", endpoint)
     if endpoint in pages.keys():
         print("Returned a normal site")
@@ -41,7 +41,6 @@ def load_site(endpoint):
         print("------------")
         for i in range(len(endp_split)):
             #i+1 ig [0:i+1]
-            print(repr("/".join(endp_split[0:i+1]) + "/*"),  "p:", "/".join(endp_split[i+1:len(endp_split)]))
             if "/".join(endp_split[0:i+1]) + "/*" in pages.keys():
                 return pages["/".join(endp_split[0:i+1]) + "/*"]("/".join(endp_split[i+1:len(endp_split)]))
     return "", {"Refresh":"0;url=/404.html"}        
@@ -68,7 +67,7 @@ import json
 import data_reader as dr
 @endpoint("/")
 def index():
-    return serve_html_website("index.html").replace("CONFIG", )
+    return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data))
 
 @endpoint("/admin/")
 def adminpage():

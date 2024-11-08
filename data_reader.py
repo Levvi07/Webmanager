@@ -98,7 +98,6 @@ def refresh_site_config_data():
     site_config_file.close()
     #adding plugin configs on top of normal configs
     site_config_data = {**site_config_data, **plugin_configs}
-    print(site_config_data)
 
 def refresh_roles_data():
     global roles_data

@@ -37,3 +37,4 @@ You can add/delete/modify configs through the website, be vary not to delete the
 - All actions are logged in /log/PLUGINNAME_log.txt in the webservice's root folde
 - You may set configs for the plugins. You must create a file called "global_configs.json" and write the config as  {"key":value} (standard JSON format)
 - You can change the configs trough the plugins' page
+- You can access the site's data through the data reader
