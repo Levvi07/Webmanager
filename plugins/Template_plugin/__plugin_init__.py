@@ -30,6 +30,9 @@ def serve_html_website(route):
     return f.read()
 
 def load_site(endpoint, request):
+    #storing request in a global variable so you dont have to use **kwargs and shit, just store it in a local variable upon execution
+    # requests probs cant even come in fast enough to change it between those few CPU cycles
+    # EVEN if we had like thousands of users concurrently (which we dont btw) 
     print("endp", endpoint)
     if endpoint in pages.keys():
         print("Returned a normal site")
