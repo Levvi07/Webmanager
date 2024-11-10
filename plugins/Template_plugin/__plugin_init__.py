@@ -29,23 +29,27 @@ def serve_html_website(route):
     f = open(f"./{pl_path}templates/{route}")
     return f.read()
 
+
+import inspect
 def load_site(endpoint, request):
-    #storing request in a global variable so you dont have to use **kwargs and shit, just store it in a local variable upon execution
-    # requests probs cant even come in fast enough to change it between those few CPU cycles
-    # EVEN if we had like thousands of users concurrently (which we dont btw) 
-    print("endp", endpoint)
+    # storing request in a global variable so you dont have to use **kwargs and shit, just store it in a local variable upon execution
+    # the function will only pass the request to the function if it has an argument named "request"
     if endpoint in pages.keys():
-        print("Returned a normal site")
-        return pages[endpoint]()
+        args = inspect.getfullargspec(pages[endpoint])
+        if "request" in args.args:
+            return pages[endpoint](request=request)
+        else:
+            return pages[endpoint]()
     else:
         endp_split = endpoint.split("/")
-        for k in pages.keys():
-            print(repr(k))
-        print("------------")
         for i in range(len(endp_split)):
             #i+1 ig [0:i+1]
             if "/".join(endp_split[0:i+1]) + "/*" in pages.keys():
-                return pages["/".join(endp_split[0:i+1]) + "/*"]("/".join(endp_split[i+1:len(endp_split)]))
+                args = inspect.getfullargspec(pages["/".join(endp_split[0:i+1]) + "/*"])
+                if "request" in args.args:
+                    return pages["/".join(endp_split[0:i+1]) + "/*"](p="/".join(endp_split[i+1:len(endp_split)]), request=request)
+                else:
+                    return pages["/".join(endp_split[0:i+1]) + "/*"](p="/".join(endp_split[i+1:len(endp_split)]))
     return "", {"Refresh":"0;url=/404.html"}        
     
 
@@ -69,8 +73,8 @@ def endpoint(name):
 import json
 import data_reader as dr
 @endpoint("/")
-def index():
-    return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data))
+def index(request):
+    return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data)).replace("REQUEST", str(request.form))
 
 @endpoint("/admin/")
 def adminpage():
@@ -78,11 +82,9 @@ def adminpage():
 
 @endpoint("/css/*")
 def css(p):
-    print("Returned a css file")
     pl_path = PluginData().path
     if pl_path[-1] != "/":
-        pl_path += "/"
-    print("css_pl_path",  f".{pl_path}css/{p}")    
+        pl_path += "/"  
     if not os.path.exists(f".{pl_path}css/{p}"):
         return "No such file"
     f = open(f".{pl_path}css/{p}")
@@ -91,7 +93,6 @@ def css(p):
 #handle js
 @endpoint("/js/*")
 def js(p):
-    print("returned some js")
     pl_path = PluginData().path
     if pl_path[-1] != "/":
         pl_path += "/"    

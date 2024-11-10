@@ -36,7 +36,6 @@ def reload_plugins():
     for name in Imported_plugins.keys():
         if os.path.exists(f"./plugins/{name}/global_configs.json"):
             #import configs
-            print("WE HAVE PLUGIN CONFIGS")
             f = open(f"./plugins/{name}/global_configs.json", "r")
             dr.add_plugin_config(json.loads(f.read()))
             f.close()
@@ -1167,9 +1166,9 @@ def plugin_manager():
     return "WIP"
 
 #plugins with subfolder
-@app.route("/plugins/<path:p>")
+@app.route("/plugins/<path:p>", methods=["GET", "POST"])
 def plugin_site_handler(p):
-    perm_code = handle_users.check_site_perm("/admin/change_conf", request.cookies.get("token"))
+    perm_code = handle_users.check_site_perm(f"/plugins/{p}", request.cookies.get("token"))
     if perm_code == "401":
         return "", {"Refresh": "0; url=/401.html"}
     if perm_code == "403":
@@ -1181,15 +1180,10 @@ def plugin_site_handler(p):
         website = dr.site_config_data["UserDisabledSite"]  
         return "", {"Refresh":f"0;url={website}"}
     
-    print("got this path:" + p)
     if "/" not in p:
         return "", {"Refresh":"0;url=/404.html"}
     plname = p.split("/")[0]
     endp = "/" + "/".join(p.split("/")[1:])
-    print("Imported_pl", Imported_plugins)
-    for k in Imported_plugins.keys():
-        print("dk", repr(k))
-    print("pl", repr(plname))
     return Imported_plugins[plname].load_site(endp, request)
 
 
