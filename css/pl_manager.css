@@ -1,0 +1,40 @@
+div{
+    border:1px solid black;
+    border-radius:25px;
+    width:30%;
+    height:20%;
+    margin-right:0.55%;
+    margin-left:0.55%;
+    margin-bottom:1%;
+    padding-top:0.5%;
+    padding-bottom:0.5%;
+    padding-right:1%;
+    padding-left:1%;
+    display:inline-block;
+    margin-top:1%;
+    position:relative;
+}
+
+.error{
+    color:red;
+}
+
+.no_error{
+    color:rgb(18, 175, 18);
+}
+.error, .no_error{
+    margin-top:7%;
+}
+
+.name{
+    color:black;
+    font-size:120%; 
+    font-weight: bolder;
+    font-family: "Helvetica";
+}
+
+p{
+    margin:none;
+    padding:none;
+    position: absolute;
+}

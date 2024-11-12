@@ -12,6 +12,7 @@ def create_app():
 #function for loading/reloading plugins
 pluginlist = []
 Imported_plugins = {}
+pluginerrors = {}
 def reload_plugins():
     global Imported_plugins
     dr.add_plugin_config("RESET")
@@ -29,9 +30,11 @@ def reload_plugins():
             Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
             if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
                 print(f"Wont import module {name} because 'name' field is empty (See PluginData class)")
+                pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
                 Imported_plugins[name] = None
         except:
             print(f"Cant initalise module '{name}' because __plugin_init__.py is not present")
+            pluginerrors[name] = f"Cant initalise module, because __plugin_init__.py is not present"
     #importing plugin configs
     for name in Imported_plugins.keys():
         if os.path.exists(f"./plugins/{name}/global_configs.json"):
@@ -1163,7 +1166,32 @@ def change_conf():
 #plugin manager website
 @app.route("/admin/plugin_manager.html")
 def plugin_manager():
-    return "WIP"
+    perm_code = handle_users.check_site_perm("/admin/plugin_manager.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    pluginlist = os.listdir("./plugins/")
+    pluginlist.pop(pluginlist.index("__init__.py"))
+    pluginlist.pop(pluginlist.index("__pycache__"))
+    pl_html = ""
+    for p in pluginlist:
+        pl_html += f"<div id='{p}'><p  class='name'>{p}</p> <br>"
+        if p in pluginerrors.keys():
+            pl_html += f"<p class='error'>Error:{pluginerrors[p]}</p>"
+        else:
+            pl_html += f"<p class='no_error''>No errors</p>"    
+        pl_html += "</div>"
+    return serve_html_website("/admin/plugin_manager.html").replace("PLUGINCARDS", pl_html)
+
+
 
 #plugins with subfolder
 @app.route("/plugins/<path:p>", methods=["GET", "POST"])
