@@ -31,10 +31,18 @@ def reload_plugins():
             if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
                 print(f"Wont import module {name} because 'name' field is empty (See PluginData class)")
                 pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
-                Imported_plugins[name] = None
-        except:
+                Imported_plugins[name] = None 
+        except AttributeError:
+            print(f"\nCant initalise module '{name}' because PluginData class is not present or some data is missing\n")
+            pluginerrors[name] = "PluginData class is not present or some data is missing"
+        except ModuleNotFoundError:
             print(f"Cant initalise module '{name}' because __plugin_init__.py is not present")
             pluginerrors[name] = f"Cant initalise module, because __plugin_init__.py is not present"
+        except Exception as e:
+            print(e)
+            pluginerrors[name] = e
+                
+
     #importing plugin configs
     for name in Imported_plugins.keys():
         if os.path.exists(f"./plugins/{name}/global_configs.json"):
@@ -1183,11 +1191,25 @@ def plugin_manager():
     pluginlist.pop(pluginlist.index("__pycache__"))
     pl_html = ""
     for p in pluginlist:
+        try:
+            pl_data = Imported_plugins[p].PluginData()
+        except:
+            pl_data = None   
         pl_html += f"<div id='{p}'><p  class='name'>{p}</p> <br>"
+        try:
+            pl_html += f"<p class='version'>Version: {pl_data.version}</p>"
+        except:
+            pl_html += f"<p class='version'>Version: Not specified</p>"     
+        try:
+            pl_html += f"<p class='description'>Description: {pl_data.description}</p>"
+        except:
+            pl_html += f"<p class='description'>No description</p>" 
         if p in pluginerrors.keys():
+            # Display error set when importing
             pl_html += f"<p class='error'>Error:{pluginerrors[p]}</p>"
-        else:
-            pl_html += f"<p class='no_error''>No errors</p>"    
+        elif p not in Imported_plugins:
+            # Plugin probably was added after startup, and plugins werent reloaded
+            pl_html += f"<p class='error'>Error:Plugin not imported! Reload Plugins!</p>"
         pl_html += "</div>"
     return serve_html_website("/admin/plugin_manager.html").replace("PLUGINCARDS", pl_html)
 

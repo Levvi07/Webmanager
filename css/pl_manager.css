@@ -13,28 +13,38 @@ div{
     display:inline-block;
     margin-top:1%;
     position:relative;
+    transition: box-shadow 0.3s ease;
+    word-break: break-all;
 }
 
 .error{
     color:red;
 }
 
-.no_error{
-    color:rgb(18, 175, 18);
+.error{
+    margin-top:17%;
 }
-.error, .no_error{
-    margin-top:7%;
+
+.description{
+    margin-top:8%;
 }
 
 .name{
-    color:black;
     font-size:120%; 
     font-weight: bolder;
     font-family: "Helvetica";
+}
+
+.version{
+    margin-top:5%
 }
 
 p{
     margin:none;
     padding:none;
     position: absolute;
+}
+
+div:hover {
+    box-shadow: 10px 10px 20px rgba(36, 36, 36, 0.5);
 }
