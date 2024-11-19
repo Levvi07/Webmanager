@@ -1,0 +1,31 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Plugin Sheet of NAME</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="/css/plugin_sheet.css">
+    </head>
+    <body>
+        <div id="data_container">
+            <h1>NAME</h1>
+                <p><span style="font-weight: bolder;">Version:</span>VERSION</p>
+                <p><span style="font-weight: bolder;">Descriptiom:</span>DESCRIPTION</p>
+                <p><span style="font-weight: bolder;">Path:</span>PATH</p>
+                logs
+                enable/disable
+                whatever else we need
+        </div>
+        <form action="/admin/changePluginStatus/" method="POST">
+            <input type="text" value="NAME" style="display:none" name="name">
+            <input type="submit" value="Enable" name="action">
+        </form>
+        <form action="/admin/changePluginStatus/" method="POST">
+            <input type="text" value="NAME" style="display:none" name="name">
+            <input type="submit" value="Disable" name="action">
+        </form>
+    </body>
+    
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>

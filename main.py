@@ -3,7 +3,7 @@ import os, json
 from flask import send_from_directory, request, make_response
 import handle_users, csv, hashlib
 import data_reader as dr
-import importlib
+import importlib, time
 dr.init()
 def create_app():
     app = Flask(__name__)
@@ -23,15 +23,31 @@ def reload_plugins():
         pluginlist.pop(pluginlist.index("__init__.py"))
     if "__pycache__" in pluginlist:
         pluginlist.pop(pluginlist.index("__pycache__"))
+    #defined here so we dont redefine the same thing every time
+    enabled_data = dr.plugin_enabled_data
+    #make an enabled pairing
+    enabled_pair = {}
+    for i in range(len(enabled_data)-1):
+        enabled_pair[enabled_data[i+1][0]] = enabled_data[i+1][1]
 
+    #program will write new entrys of new plugins to file if there are any new ones
+    enabled_changed = 0
     #initialising all the __plugin_init__.py files (this is the standard file containing the page functions and all that)
     for name in pluginlist:
         try:
+            if name not in enabled_pair.keys():
+                print(name, "not in enabled list")
+                #not yet in enabled csv, put it in there, disabled by default
+                enabled_pair[name] = 0
+                enabled_changed = 1
             Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
             if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
                 print(f"Wont import module {name} because 'name' field is empty (See PluginData class)")
                 pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
-                Imported_plugins[name] = None 
+                Imported_plugins.pop(name)
+            if int(enabled_pair[name]) != 1:
+                print(f"Wont import module {name} because its disabled")
+                Imported_plugins.pop(name)
         except AttributeError:
             print(f"\nCant initalise module '{name}' because PluginData class is not present or some data is missing\n")
             pluginerrors[name] = "PluginData class is not present or some data is missing"
@@ -42,7 +58,6 @@ def reload_plugins():
             print(e)
             pluginerrors[name] = e
                 
-
     #importing plugin configs
     for name in Imported_plugins.keys():
         if os.path.exists(f"./plugins/{name}/global_configs.json"):
@@ -51,7 +66,19 @@ def reload_plugins():
             dr.add_plugin_config(json.loads(f.read()))
             f.close()
         else:
-            print(f"global plugin configs for {name} dont exist")    
+            print(f"global plugin configs for {name} dont exist")  
+    
+    new_enabled_data = enabled_data
+    if enabled_changed:
+        for k in enabled_pair.keys():
+            new_enabled_data.append([k, enabled_pair[k]])
+        f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in new_enabled_data:
+            writer.writerow(row)
+        f.close()
+
+
 #loading plugins before execution
 reload_plugins()
 
@@ -1190,29 +1217,143 @@ def plugin_manager():
     pluginlist.pop(pluginlist.index("__init__.py"))
     pluginlist.pop(pluginlist.index("__pycache__"))
     pl_html = ""
+    #defined here so we dont redefine the same thing every time
+    enabled_data = dr.plugin_enabled_data
+    #make an enabled pairing
+    enabled_pair = {}
+    for i in range(len(enabled_data)-1):
+        enabled_pair[enabled_data[i+1][0]] = enabled_data[i+1][1]
     for p in pluginlist:
         try:
             pl_data = Imported_plugins[p].PluginData()
         except:
             pl_data = None   
-        pl_html += f"<div id='{p}'><p  class='name'>{p}</p> <br>"
+
+        pl_html += f"<div id='{p}' onclick='window.location=\"/admin/plugin_sheet/{p}\"'><p  class='name'>{p}</p> <br>"
+
         try:
             pl_html += f"<p class='version'>Version: {pl_data.version}</p>"
         except:
             pl_html += f"<p class='version'>Version: Not specified</p>"     
+
         try:
             pl_html += f"<p class='description'>Description: {pl_data.description}</p>"
         except:
             pl_html += f"<p class='description'>No description</p>" 
+
         if p in pluginerrors.keys():
             # Display error set when importing
             pl_html += f"<p class='error'>Error:{pluginerrors[p]}</p>"
         elif p not in Imported_plugins:
             # Plugin probably was added after startup, and plugins werent reloaded
             pl_html += f"<p class='error'>Error:Plugin not imported! Reload Plugins!</p>"
+
+        try:
+            if p not in enabled_pair.keys():
+                pl_html += "<div class='status_no_import' title='Plugin is not imported, press reload!'></div>"
+            elif int(enabled_pair[p]) == 1:    
+                pl_html += "<div class='status_enabled' title='Plugin enabled'></div>"
+            elif int(enabled_pair[p]) == 0:
+                pl_html += "<div class='status_disabled' title='Plugin disabled'></div>"
+            else:
+                pl_html += "<div class='status_error' title='An error occured'></div>"
+        except:
+                pl_html += "<div class='status_error' title='An error occured'></div>"
         pl_html += "</div>"
     return serve_html_website("/admin/plugin_manager.html").replace("PLUGINCARDS", pl_html)
 
+@app.route("/admin/reload_plugins/")
+def reload_pl_site():
+    perm_code = handle_users.check_site_perm("/admin/reload_plugins", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    reload_plugins()
+    return "Reloading...", {"Refresh":"2;url=/admin/plugin_manager.html"}
+
+@app.route("/admin/plugin_sheet/<path:p>")
+def plugin_sheet(p):
+    perm_code = handle_users.check_site_perm("/admin/plugin_sheet/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    try:
+        pl_data = Imported_plugins[p].PluginData()
+    except:
+        version = "#CANT IMPORT#"
+        description = "#CANT IMPORT#"
+        path = "#CANT IMPORT#"   
+
+    try:
+        version = str(pl_data.version)
+    except:    
+        version = "#CANT IMPORT#"
+
+    try:
+        path = str(pl_data.path)
+    except:
+        path = "#CANT IMPORT#"
+
+    try:
+        description = str(pl_data.description)
+    except:
+        description = "#CANT IMPORT#"            
+    return serve_html_website("/admin/plugin_sheet.html").replace("VERSION", version).replace("PATH", path).replace("DESCRIPTION", description).replace("NAME", p)
+
+@app.route("/admin/changePluginStatus/", methods=["POST"])
+def change_pl_stat():
+    perm_code = handle_users.check_site_perm("/admin/changePluginStatus/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    form = request.form
+    name = form["name"]
+    action = form["action"]
+    
+    new_enable_data = dr.plugin_enabled_data
+    for i in range(len(new_enable_data)-1):
+        if new_enable_data[i+1][0] == name:
+            if action == "Enable":
+                new_enable_data[i+1][1] = 1
+            if action == "Disable":
+                new_enable_data[i+1][1] = 0
+    
+    f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_enable_data:
+        writer.writerow(row)
+    f.close()
+
+    #wait for data reader to refresh
+    reload_time = dr.site_config_data["RefreshDataFrequency"]
+    time.sleep(int(reload_time))
+
+    reload_plugins()
+    return "Status changed", {"Refresh":"0;url=/admin/plugin_manager.html"}
 
 
 #plugins with subfolder
@@ -1234,7 +1375,13 @@ def plugin_site_handler(p):
         return "", {"Refresh":"0;url=/404.html"}
     plname = p.split("/")[0]
     endp = "/" + "/".join(p.split("/")[1:])
-    return Imported_plugins[plname].load_site(endp, request)
+    try:
+        return Imported_plugins[plname].load_site(endp, request)
+    except KeyError:
+        if plname in os.listdir("./plugins/"):
+            return "Plugin is disabled!", {"Refresh":"5;url=/admin/plugin_manager.html"}
+        else:
+            return "Plugin does not exist!", {"Refresh":"5;url=/admin/plugin_manager.html"}
 
 
 #handle any other static site

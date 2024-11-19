@@ -99,6 +99,7 @@ def refresh_site_config_data():
     #adding plugin configs on top of normal configs
     site_config_data = {**site_config_data, **plugin_configs}
 
+
 def refresh_roles_data():
     global roles_data
     roles_file = open("./data/roles.csv", encoding="UTF-8")
@@ -125,6 +126,18 @@ def refresh_groups_data():
     groups_file.close()  
 
 
+def refresh_plugin_enabled_data():
+    global plugin_enabled_data
+    plugin_enabled_file = open("./data/plugin_enabled.csv", encoding="UTF-8")
+    csv_reader = csv.reader(plugin_enabled_file)
+    plugin_enabled_data = []
+    for row in csv_reader:
+        plugin_enabled_data.append(row)
+    #returning cursor to the start cause python cant read the file again otherwise
+    plugin_enabled_file.seek(0)    
+    checksums["plugin_enabled.csv"] = hashlib.md5(plugin_enabled_file.read().encode()).hexdigest()    
+    plugin_enabled_file.close()
+
 
 funcs = {
     "users.csv": refresh_users_data,
@@ -134,7 +147,8 @@ funcs = {
     "site_perms.csv":refresh_site_perms_data,
     "site_configs.json": refresh_site_config_data,
     "roles.csv":refresh_roles_data,
-    "groups.csv":refresh_groups_data
+    "groups.csv":refresh_groups_data,
+    "plugin_enabled.csv":refresh_plugin_enabled_data
 }
 
 # This function is for adding configs manually

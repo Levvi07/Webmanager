@@ -17,13 +17,66 @@ div{
     word-break: break-all;
 }
 
-.error{
-    color:red;
+.status_disabled{
+    width:2%;
+    height:9%;
+    background-color: red;
+    border:none;
+    position:absolute;
+    top:7%;
+    right:5%;
+}
+
+.status_enabled{
+    width:2%;
+    height:9%;
+    background-color: rgb(56, 155, 53);
+    border:none;
+    position:absolute;
+    top:7%;
+    right:5%;
+}
+
+.status_no_import{
+    width:2%;
+    height:9%;
+    background-color: rgb(255, 217, 0);
+    border:none;
+    position:absolute;
+    top:7%;
+    right:5%;
+}
+
+.status_error{
+    width:2%;
+    height:9%;
+    background-color: rgb(255, 0, 242);
+    border:none;
+    position:absolute;
+    top:7%;
+    right:5%;
 }
 
 .error{
+    color:red;
     margin-top:17%;
 }
+
+#reload{
+    width:40%;
+    height:20%;
+    position:sticky;
+    top:10%;
+    left:45%;
+    background-color: blue;
+    border-radius: 25px;
+    color:white;
+    font-size:130%;
+    padding:1%;
+    text-decoration: none;
+    font-weight: bolder;
+}
+
 
 .description{
     margin-top:8%;
