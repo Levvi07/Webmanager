@@ -25,3 +25,7 @@ input[type="submit"]{
 input[value="Disable"]{
     top:30%;
 }
+
+input[value="Remove Plugin"]{
+    top:45%;
+}

@@ -1355,7 +1355,37 @@ def change_pl_stat():
     reload_plugins()
     return "Status changed", {"Refresh":"0;url=/admin/plugin_manager.html"}
 
+@app.route("/admin/removePlugin/", methods=["POST"])
+def remove_plugin():
+    perm_code = handle_users.check_site_perm("/admin/changePluginStatus/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    name = request.form["name"]
+    try:
+        confirmed = request.form["confirm"]
+        if confirmed == "1":
+            #confirmed, delete
+            os.rmdir("./plugins/" + name)
+            return "Plugin removed, redirecting...", {"Refresh":"3;url=/admin/plugin_manager.html"}
+    except Exception as e:
+        #nah, get confirm
+        print(e)    
+        return serve_html_website("/admin/plugin_rm_confirm.html").replace("NAME", name)   
 
+@app.route("/admin/upload_plugin.html", methods=["POST"])
+def upload_plugin():
+    file = request.files["file"]
+    file.save(f"./uploads/{file.filename}")
+    return "saved"
 #plugins with subfolder
 @app.route("/plugins/<path:p>", methods=["GET", "POST"])
 def plugin_site_handler(p):
