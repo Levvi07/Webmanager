@@ -2,5 +2,9 @@
 "TokenExpire":"43200",
 "RefreshDataFrequency":"2",
 "PageDisabledSite":"/page_disabled.html",
-"UserDisabledSite":"/user_disabled.html"
+"UserDisabledSite":"/user_disabled.html",
+"LoggingEnabled":"1",
+"LogFolder":"./logs/",
+"LogPrint":"1",
+"PluginDefaultState":"0"
 }

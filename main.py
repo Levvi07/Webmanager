@@ -4,10 +4,15 @@ from flask import send_from_directory, request, make_response
 import handle_users, csv, hashlib
 import data_reader as dr
 import importlib, time
+from LLogger import *
+
+
 dr.init()
 def create_app():
     app = Flask(__name__)
     return app
+
+CreateLog(text="The app has started up!", severity=0, category="SystemLogs/Startup")
 
 #function for loading/reloading plugins
 pluginlist = []
@@ -30,16 +35,24 @@ def reload_plugins():
     for i in range(len(enabled_data)-1):
         enabled_pair[enabled_data[i+1][0]] = enabled_data[i+1][1]
 
-    #program will write new entrys of new plugins to file if there are any new ones
-    enabled_changed = 0
     #initialising all the __plugin_init__.py files (this is the standard file containing the page functions and all that)
     for name in pluginlist:
         try:
             if name not in enabled_pair.keys():
-                print(name, "not in enabled list")
-                #not yet in enabled csv, put it in there, disabled by default
-                enabled_pair[name] = 0
-                enabled_changed = 1
+                CreateLog(name + " was not found in enabled list, added it", 0, "SystemLogs/PluginEnables")
+                #not yet in enabled csv, put it in there, default set by configs
+                try:
+                    status = int(dr.site_config_data["PluginDefaultState"])
+                except:
+                    CreateLog(text="PluginDefaultState must be a number", severity=2, category="SystemLogs/Configs")
+                enabled_pair[name] = status
+                new_enabled_data = enabled_data
+                new_enabled_data.append([name, status])
+                f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
+                writer = csv.writer(f)
+                for row in new_enabled_data:
+                    writer.writerow(row)
+                f.close()
             Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
             if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
                 print(f"Wont import module {name} because 'name' field is empty (See PluginData class)")
@@ -66,17 +79,7 @@ def reload_plugins():
             dr.add_plugin_config(json.loads(f.read()))
             f.close()
         else:
-            print(f"global plugin configs for {name} dont exist")  
-    
-    new_enabled_data = enabled_data
-    if enabled_changed:
-        for k in enabled_pair.keys():
-            new_enabled_data.append([k, enabled_pair[k]])
-        f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
-        writer = csv.writer(f)
-        for row in new_enabled_data:
-            writer.writerow(row)
-        f.close()
+            print(f"global plugin configs for {name} dont exist")
 
 
 #loading plugins before execution
@@ -1246,7 +1249,7 @@ def plugin_manager():
             pl_html += f"<p class='error'>Error:{pluginerrors[p]}</p>"
         elif p not in Imported_plugins:
             # Plugin probably was added after startup, and plugins werent reloaded
-            pl_html += f"<p class='error'>Error:Plugin not imported! Reload Plugins!</p>"
+            pl_html += f"<p class='error'>Error:Plugin not imported! Reload Plugins! (might just be disabled)</p>"
 
         try:
             if p not in enabled_pair.keys():
@@ -1438,6 +1441,7 @@ def change_pl_stat():
     time.sleep(int(reload_time))
 
     reload_plugins()
+    CreateLog(f"Plugin {name} got {action.lower()}d", 0, "SystemLogs/PluginEnables")
     return "Status changed", {"Refresh":"0;url=/admin/plugin_manager.html"}
 
 @app.route("/admin/removePlugin/", methods=["POST"])

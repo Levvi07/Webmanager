@@ -26,7 +26,9 @@ You can add/delete/modify configs through the website, be vary not to delete the
  PageDisabledSite: Users get redirected here when a page is disabled  \
  UserDisabledSite: Disabled users get redirected here  \
  LoggingEnabled: 1 or 0; tells the program whether to log or not \
- LogFolder: Tells the program where to write logs
+ LogFolder: Tells the program where to write logs \
+ LogPrint: 1 or 0; Whether the logging program prints to the console or not \
+ PluginDefaultState: 1 or 0; when a plugin is first imported its going to either become Enabled if this value is 1 or disabled if its 0 
 
  ### Plugins
 
@@ -57,5 +59,6 @@ You can add/delete/modify configs through the website, be vary not to delete the
         CreateLog(category, severity, text)
     ```
 - Parameters:
-        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service.log"
+        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service/yyyy-mm-dd.log"
         severity: 0-2 --> 0: [MESSAGE]    1: [WARNING]      2: [ERROR]
+        text: whats going to be written in the logs

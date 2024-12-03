@@ -14,7 +14,7 @@ div{
     margin-top:1%;
     position:relative;
     transition: box-shadow 0.3s ease;
-    word-break: break-all;
+    word-break: break-word;
 }
 
 .status_disabled{
