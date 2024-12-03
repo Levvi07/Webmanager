@@ -57,5 +57,5 @@ You can add/delete/modify configs through the website, be vary not to delete the
         CreateLog(category, severity, text)
     ```
 - Parameters:
-        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service.txt"
+        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service.log"
         severity: 0-2 --> 0: [MESSAGE]    1: [WARNING]      2: [ERROR]
