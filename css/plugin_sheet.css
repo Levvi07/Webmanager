@@ -12,7 +12,7 @@ input[type="submit"]{
     font-size:170%;
     width:20%;
     padding:1%;
-    border-right:3px solid blue;
+    border:3px solid blue;
     border-radius: 25px;
     left:75%;
     position: absolute;
@@ -28,4 +28,15 @@ input[value="Disable"]{
 
 input[value="Remove Plugin"]{
     top:45%;
+}
+
+#conf_change_submit{
+    border:1px black solid;
+    left:1%;
+    margin-top:1%;
+    width:10% !important;
+    height:5.5%;
+    font-size:70%;
+    padding:none !important;
+    position:relative;
 }

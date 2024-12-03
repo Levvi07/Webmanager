@@ -60,9 +60,9 @@ def reload_plugins():
                 
     #importing plugin configs
     for name in Imported_plugins.keys():
-        if os.path.exists(f"./plugins/{name}/global_configs.json"):
+        if os.path.exists(f"./plugins/{name}/__plugin_configs__.json"):
             #import configs
-            f = open(f"./plugins/{name}/global_configs.json", "r")
+            f = open(f"./plugins/{name}/__plugin_configs__.json", "r")
             dr.add_plugin_config(json.loads(f.read()))
             f.close()
         else:
@@ -1313,8 +1313,93 @@ def plugin_sheet(p):
     try:
         description = str(pl_data.description)
     except:
-        description = "#CANT IMPORT#"            
-    return serve_html_website("/admin/plugin_sheet.html").replace("VERSION", version).replace("PATH", path).replace("DESCRIPTION", description).replace("NAME", p)
+        description = "#CANT IMPORT#"
+
+    #display config
+    if os.path.exists(f"./plugins/{p}/__plugin_configs__.json"):
+        try:
+            conf = open(f"./plugins/{p}/__plugin_configs__.json").read()
+            confdict = {}
+            for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
+                confdict[pair.split(":")[0].replace(" ", "")] = pair.split(":")[1].replace(" ", "")
+    
+            #reusing it
+            conf = ""
+            for key in confdict.keys():
+                conf += f"{key} = <input value='{confdict[key]}' name='{key}'> <a href='/admin/delete_pl_config/{p}/{key}'>Delete</a><br>"
+            conf += '<input type="submit" value="Change Configs" id="conf_change_submit">'
+        except:
+            conf = "Configs are the incorrect format"
+    else:
+        conf = "__plugin_configs__.json does not exist"
+
+    return serve_html_website("/admin/plugin_sheet.html").replace("VERSION", version).replace("PATH", path).replace("DESCRIPTION", description).replace("NAME", p).replace("CONFIGS", conf)
+
+@app.route("/admin/delete_pl_config/<path:pl_name>/<path:conf_name>")
+def delete_pl_config(pl_name, conf_name):
+    perm_code = handle_users.check_site_perm(f"/admin/delete_pl_config/{pl_name}/{conf_name}", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json")
+    newfile = ""
+    DoesExist = 0
+    for line in f.readlines():
+        try:
+            if conf_name != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                newfile += line
+            else:
+                DoesExist = 1
+        except:
+            pass
+    if not DoesExist:
+        return "Config does not exist!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+    newfile = newfile.replace(",\n}", "\n}")
+    f.close()
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
+    f.write(newfile)
+    f.close()
+    return "Changes made!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+
+@app.route("/admin/change_pl_config/", methods=["POST"])
+def change_pl_conf():
+    perm_code = handle_users.check_site_perm(f"/admin/change_pl_config/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    conf = dict(request.form)
+    conf.pop("__pl_name__")
+    pl_name = request.form["__pl_name__"]
+    jsonobj = "{\n"
+    clen = len(conf)
+    keys = list(conf)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{conf[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "Config changed!", {"Refresh": f"2;url=/admin/plugin_sheet/{pl_name}"}
 
 @app.route("/admin/changePluginStatus/", methods=["POST"])
 def change_pl_stat():
@@ -1381,11 +1466,7 @@ def remove_plugin():
         print(e)    
         return serve_html_website("/admin/plugin_rm_confirm.html").replace("NAME", name)   
 
-@app.route("/admin/upload_plugin.html", methods=["POST"])
-def upload_plugin():
-    file = request.files["file"]
-    file.save(f"./uploads/{file.filename}")
-    return "saved"
+        
 #plugins with subfolder
 @app.route("/plugins/<path:p>", methods=["GET", "POST"])
 def plugin_site_handler(p):

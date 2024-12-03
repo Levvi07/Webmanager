@@ -10,7 +10,7 @@
 
 ### Fill out group/rule/user ids
 
-- if -1 is present in user_access_role then the URL must end in an id (eg. /user/1)
+- if -1 is present in user_access_role and access_level is 0 then the URL must end in an id (eg. /user/1)
 in this case the given id may be provided access too
 
 /dir/dir2/* means anything that starts with /dir/dir2/ is included under the set rule
@@ -24,18 +24,38 @@ You can add/delete/modify configs through the website, be vary not to delete the
  TokenExpire: Sets the amount of time, login tokens are valid for (seconds)  \
  RefreshDataFrequency: Tells the data reader, how often it should refresh its contents  \
  PageDisabledSite: Users get redirected here when a page is disabled  \
- UserDisabledSite: Disabled users get redirected here  
+ UserDisabledSite: Disabled users get redirected here  \
+ LoggingEnabled: 1 or 0; tells the program whether to log or not \
+ LogFolder: Tells the program where to write logs
 
  ### Plugins
 
-- Plugins may have any number and structure of folders
+- Plugins may have any number and structure of folders and files
 - The program still runs in ./ compared to main.py so if you want to use something from the plugin's folder use the correct subfolder (set in PluginData.path)
 - It MUST have an init python file named \__plugin_init__.py
 - In the main python file, you may import other local python files, and access your assets, but u may have to use /plugins/PLUGINNAME/...
 - It has to contain the subroutines for your endpoint
 - Upon startup, the server is going to initialise all plugins, but active reloading is not implemented (too resource heavy), if a  plugin is changed, press "Reload Plugin" on the plugins page
 - Plugins are to be placed in the "plugins" folder in a subfolder, holding the name of the plugin
-- All actions are logged in /log/PLUGINNAME_log.txt in the webservice's root folde
-- You may set configs for the plugins. You must create a file called "global_configs.json" and write the config as  {"key":value} (standard JSON format)
-- You can change the configs trough the plugins' page
-- You can access the site's data through the data reader
+- All actions are logged in /log/PLUGINNAME_log.txt in the webservice's root folder
+- You may set configs for the plugins. You must create a file called "\__plugin_configs__.json" in the plugin's root folder and write the config as  {"key":value, "key2":value2} (standard JSON format)
+- You can change the configs trough the plugin manager page
+- You can access the main site's data through the data reader
+- Uploading folders through a webpage is sadly not possible, therefore they must be uploaded through SFTP or some other protocol (setting up a local test environment is also advised for development)
+
+
+### Logging
+
+- Logging is done with the "LLogger" module, import it into any program to log
+- Logging may be turned on/off using the config
+- The module logs into the folder specified in the config folder
+- When logging, you must specify a category, a severity, the text of the error
+- When an attempt at creating logs fails, an error log is made in the "\__logging_error__" category
+- Usage:
+    ```
+        from LLogger import *
+        CreateLog(category, severity, text)
+    ```
+- Parameters:
+        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service.txt"
+        severity: 0-2 --> 0: [MESSAGE]    1: [WARNING]      2: [ERROR]

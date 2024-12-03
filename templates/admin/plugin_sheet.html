@@ -12,10 +12,12 @@
                 <p><span style="font-weight: bolder;">Version:</span>VERSION</p>
                 <p><span style="font-weight: bolder;">Descriptiom:</span>DESCRIPTION</p>
                 <p><span style="font-weight: bolder;">Path:</span>PATH</p>
-                logs
-                enable/disable
-                whatever else we need
-        </div>
+                <form action="/admin/change_pl_config/" method="POST">
+                    <h1>Plugin Configs:</h1>
+                    <input type="text" value="NAME" style="display:none" name="__pl_name__">
+                    CONFIGS
+                </form>
+            </div>
         <form action="/admin/changePluginStatus/" method="POST">
             <input type="text" value="NAME" style="display:none" name="name">
             <input type="submit" value="Enable" name="action">
