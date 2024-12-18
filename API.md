@@ -13,9 +13,9 @@
 - Returns a token (type str)
 
 ```
-{   \
-    "action": "login",  \ 
-    "username":"Levi",   \
-    "password":"tucepI123"   \
-}   
+{  
+    "action": "login",  
+    "username":"USERNAME",  
+    "password":"PASSWORD"  
+}  --> str
 ```
