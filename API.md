@@ -14,6 +14,7 @@
 
 - Returns a token (type str)
 
+
 ```
 {  
     "action": "login",  
