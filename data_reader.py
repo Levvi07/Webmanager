@@ -8,7 +8,7 @@ site_config_data = {}
 roles_data = []
 groups_data = []
 plugin_configs = {}
-
+auto_disable_data = {}
 checksums = {}
 
 def auto_refresh():
@@ -18,7 +18,6 @@ def auto_refresh():
             f = open("./data/" + filename, encoding="UTF-8")
             cur_check = hashlib.md5(f.read().encode()).hexdigest()
             if cur_check != checksums[filename]:
-                print("File changed:", filename)
                 checksums[filename] = cur_check
                 funcs[filename]()
         time.sleep(int(site_config_data["RefreshDataFrequency"]))
@@ -88,16 +87,13 @@ def refresh_site_perms_data():
     site_perm_file.close()
 
 
-def refresh_site_config_data():
-    global site_config_data
-    global plugin_configs
-    site_config_file = open("./data/site_configs.json", encoding="UTF-8")
-    content = site_config_file.read()
-    site_config_data = json.loads(content)
-    checksums["site_configs.json"] = hashlib.md5(content.encode()).hexdigest()
-    site_config_file.close()
-    #adding plugin configs on top of normal configs
-    site_config_data = {**site_config_data, **plugin_configs}
+def refresh_auto_disable_data():
+    global auto_disable_data                                                        
+    auto_disable_file = open("./data/auto_disable.json", encoding="UTF-8")
+    content = auto_disable_file.read()
+    auto_disable_data = json.loads(content)
+    checksums["auto_disable.json"] = hashlib.md5(content.encode()).hexdigest()
+    auto_disable_file.close()
 
 
 def refresh_roles_data():
@@ -125,6 +121,16 @@ def refresh_groups_data():
     checksums["groups.csv"] = hashlib.md5(groups_file.read().encode()).hexdigest()    
     groups_file.close()  
 
+def refresh_site_config_data():
+    global site_config_data
+    global plugin_configs
+    site_config_file = open("./data/site_configs.json", encoding="UTF-8")
+    content = site_config_file.read()
+    site_config_data = json.loads(content)
+    checksums["site_configs.json"] = hashlib.md5(content.encode()).hexdigest()
+    site_config_file.close()
+    #adding plugin configs on top of normal configs
+    site_config_data = {**site_config_data, **plugin_configs}
 
 def refresh_plugin_enabled_data():
     global plugin_enabled_data
@@ -148,7 +154,8 @@ funcs = {
     "site_configs.json": refresh_site_config_data,
     "roles.csv":refresh_roles_data,
     "groups.csv":refresh_groups_data,
-    "plugin_enabled.csv":refresh_plugin_enabled_data
+    "plugin_enabled.csv":refresh_plugin_enabled_data,
+    "auto_disable.json":refresh_auto_disable_data
 }
 
 # This function is for adding configs manually

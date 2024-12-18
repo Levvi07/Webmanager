@@ -16,7 +16,11 @@ def CreateLog(text="", severity=0, category="Uncategorised"):
     #reuse date, for storing only the date part
     #replace dashes with underscores, for consistency
     date = date.split(" ")[0].replace("-","_")
-    
+    #remove \ operators from text, so they wont break anything
+    text = text.replace("\\", "")
+    #category cant start with /
+    if category[0] == "/" or category[0] == "\\":
+        category = category[1:]
     #create the path, and also replace spaces with underscores
     LOGFOLDER = dr.site_config_data["LogFolder"]
     if not LOGFOLDER.endswith("/"):
@@ -24,7 +28,6 @@ def CreateLog(text="", severity=0, category="Uncategorised"):
     if category[-1] != "/":
         category += "/"
     path = f"{LOGFOLDER}{category}{date}.log".replace(" ", "_")
-    print("------", path)
 
 
     #make sure there arent any file extensions
@@ -50,7 +53,9 @@ def CreateLog(text="", severity=0, category="Uncategorised"):
             severitytxt = "WARNING"
         case "2":
             severitytxt = "ERROR"
-    f.write(f"{cur_time} [{severitytxt}] {text} \n")
+    f.write(f"{cur_time} [{severitytxt}] {text}\n")
     
     if str(dr.site_config_data["LogPrint"]) == "1":
-        print(f"{cur_time} [{severitytxt}] {text} \n")
+        print(f"{cur_time} [{severitytxt}] {text}")
+
+    return f"{cur_time} [{severitytxt}] {text}"

@@ -1,0 +1,9 @@
+19:49:06 [WARNING] Unsuccesful login attempt by `user2` with password `tucepI123ij` from 127.0.0.1!
+19:49:17 [WARNING] Unsuccesful login attempt by `user2` with password `tucepI123asd` from 127.0.0.1!
+19:49:17 [WARNING] User `user2` got disabled by Auto Disable system
+19:49:26 [MESSAGE] user2 has logged in!
+19:50:17 [MESSAGE] user2 has logged out!
+19:54:59 [WARNING] Unsuccesful login attempt by `user2` with password `tucepI123dfg` from 127.0.0.1!
+19:55:04 [WARNING] Unsuccesful login attempt by `user2` with password `tucepI123dfg` from 127.0.0.1!
+20:51:02 [MESSAGE] user2 has logged in!
+20:51:18 [MESSAGE] user2 has logged out!

@@ -17,6 +17,14 @@
                     <input type="text" value="NAME" style="display:none" name="__pl_name__">
                     CONFIGS
                 </form>
+                <form action="/admin/add_pl_config/" method="POST">
+                    <label>Key</label>
+                    <label id="valtext">Value</label> <br>
+                    <input type="text" name="k">
+                    <input type="text" name="v">
+                    <input type="text" value="NAME" style="display:none" name="__pl_name__"> <br>
+                    <input type="submit" value="Add Config" id="add_submit">
+                </form>
             </div>
         <form action="/admin/changePluginStatus/" method="POST">
             <input type="text" value="NAME" style="display:none" name="name">

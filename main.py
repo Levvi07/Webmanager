@@ -5,6 +5,8 @@ import handle_users, csv, hashlib
 import data_reader as dr
 import importlib, time
 from LLogger import *
+import shutil
+import api
 
 
 dr.init()
@@ -39,12 +41,13 @@ def reload_plugins():
     for name in pluginlist:
         try:
             if name not in enabled_pair.keys():
-                CreateLog(name + " was not found in enabled list, added it", 0, "SystemLogs/PluginEnables")
+                CreateLog(name + " was not found in enabled list, added it", 0, "SystemLogs/Plugins/Enables")
                 #not yet in enabled csv, put it in there, default set by configs
                 try:
                     status = int(dr.site_config_data["PluginDefaultState"])
                 except:
                     CreateLog(text="PluginDefaultState must be a number", severity=2, category="SystemLogs/Configs")
+                    status = 0
                 enabled_pair[name] = status
                 new_enabled_data = enabled_data
                 new_enabled_data.append([name, status])
@@ -55,21 +58,22 @@ def reload_plugins():
                 f.close()
             Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
             if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
-                print(f"Wont import module {name} because 'name' field is empty (See PluginData class)")
+                CreateLog(text=f"Wont import module {name} because 'name' field is empty (See PluginData class)", severity=2, category="SystemLogs/Plugins/Init")
                 pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
                 Imported_plugins.pop(name)
             if int(enabled_pair[name]) != 1:
-                print(f"Wont import module {name} because its disabled")
+                CreateLog(text=f"Wont import module {name} because its disabled", severity=2, category="SystemLogs/Plugins/Init")
                 Imported_plugins.pop(name)
         except AttributeError:
-            print(f"\nCant initalise module '{name}' because PluginData class is not present or some data is missing\n")
+            CreateLog(text=f"Cant initalise module '{name}' because PluginData class is not present or some data is missing", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = "PluginData class is not present or some data is missing"
         except ModuleNotFoundError:
-            print(f"Cant initalise module '{name}' because __plugin_init__.py is not present")
+            CreateLog(text=f"Cant initalise module '{name}' because __plugin_init__.py is not present", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = f"Cant initalise module, because __plugin_init__.py is not present"
         except Exception as e:
-            print(e)
+            CreateLog(text=f"Miscellanous error:{e}", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = e
+                
                 
     #importing plugin configs
     for name in Imported_plugins.keys():
@@ -79,9 +83,8 @@ def reload_plugins():
             dr.add_plugin_config(json.loads(f.read()))
             f.close()
         else:
-            print(f"global plugin configs for {name} dont exist")
-
-
+            CreateLog(text=f"global plugin configs for {name} dont exist", severity=1, category="SystemLogs/Plugins/Init")
+    CreateLog("All plugins have been reloaded", 0, "SystemLogs/Plugins/Reload")
 #loading plugins before execution
 reload_plugins()
 
@@ -151,6 +154,7 @@ def signout():
     handle_users.record_token(token.split("|")[0],token, 1)
     resp = make_response("Signed out successfully! Redirecting...")
     resp.set_cookie("token", "", max_age=0)
+    CreateLog(text=f"{token.split("|")[1]} has logged out!", severity=0, category=f"/Users/{token.split("|")[1]}")
     return resp, {"Refresh": "2; url=./login.html"}
 #handle css
 @app.route("/css/<path:p>")
@@ -217,7 +221,85 @@ def handle_login():
                 dr.refresh_tokens_data()
                 handle_users.record_token(CookieToken.split("|")[0], CookieToken, 1)
         resp.set_cookie(key="token", value=str(token), expires=int(dr.site_config_data["TokenExpire"]), max_age=int(dr.site_config_data["TokenExpire"]))
+        CreateLog(text=f"{token.split("|")[1]} has logged in!", severity=0, category=f"/Users/{token.split("|")[1]}")
+        #reset unsuccesful login attempts if needed
+        new_ad_data = dr.auto_disable_data
+        #increase the number of wrong attempts
+        new_ad_data[request.form["username"]] = "0"
+
+        jsonobj = "{\n"
+        clen = len(new_ad_data)
+        keys = list(new_ad_data)
+        for i in range(clen):
+            jsonobj += f"\"{keys[i]}\":\"{new_ad_data[keys[i]]}\""
+            if i != clen - 1:
+                jsonobj += ",\n"
+            else:
+                jsonobj += "\n}"    
+        f = open("./data/auto_disable.json", "w")
+        f.write(jsonobj)
+        f.close()
         return resp, {"Refresh": "0; url=/"}
+    #Check if the name even exists, otherwise dont make log, as to not create junk logs (we dont like that)
+    # Only Comes with a data leak (possible enumeration of usernames) if access to logs is granted
+    # Its toggleable in the config
+    MakeLog = 1
+    if dr.site_config_data["NonExistentUserLogs"] == "0":
+        names = []
+        for i in range(len(dr.users_data)-1):
+            names.append(dr.users_data[i+1][1])
+        if request.form["username"] not in names:
+            MakeLog = 0
+    if MakeLog:
+        CreateLog(text=f"Unsuccesful login attempt by `{request.form["username"]}` with password `{request.form["password"]}` from {request.remote_addr}!", severity=1, category=f"/Users/{request.form["username"]}")
+        new_ad_data = dr.auto_disable_data
+        #increase the number of wrong attempts
+        if request.form["username"] in new_ad_data.keys():
+            new_ad_data[request.form["username"]] = str(int(new_ad_data[request.form["username"]]) + 1)
+        else:
+            new_ad_data[request.form["username"]] = "1"
+
+        jsonobj = "{\n"
+        clen = len(new_ad_data)
+        keys = list(new_ad_data)
+        for i in range(clen):
+            jsonobj += f"\"{keys[i]}\":\"{new_ad_data[keys[i]]}\""
+            if i != clen - 1:
+                jsonobj += ",\n"
+            else:
+                jsonobj += "\n}"    
+        f = open("./data/auto_disable.json", "w")
+        f.write(jsonobj)
+        f.close()
+
+        try:
+            attempt_limit = int(dr.site_config_data["AutoDisable"])
+        except:
+            attempt_limit = 0
+            CreateLog("AutoDisable must be a number", 2, "SystemLogs/Configs")
+        if int(new_ad_data[request.form["username"]]) >= attempt_limit:
+            CreateLog(f"User `{request.form["username"]}` got disabled by Auto Disable system", 1, f"Users/{request.form["username"]}")
+            CreateLog(f"User `{request.form["username"]}` got disabled by Auto Disable system", 1, f"SystemLogs/AutoDisable")
+            #disabling user
+            role_id = 0
+            for i in range(len(dr.roles_data)-1):
+                if dr.roles_data[i+1][2] == "Disabled":
+                    role_id=i+1
+
+            user_id = 0
+            for i in range(len(dr.users_data)-1):
+                if dr.users_data[i+1][1] == request.form["username"]:
+                    user_id = i+1
+
+            new_user_perms = dr.user_perm_data
+            if role_id not in new_user_perms[user_id][1].split(";"):
+                new_user_perms[user_id][1] = new_user_perms[user_id][1] + f";{str(role_id)}"
+
+            f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_perms:
+                writer.writerow(row)
+            f.close()
     return resp
 
 #handle Adduser
@@ -245,10 +327,18 @@ def AddUser():
     for i in range(len(dr.roles_data)-1):
         role_options += f"<option value='{str(dr.roles_data[i+1][0])}'>{dr.roles_data[i+1][2]}</option>"
     for i in range(len(dr.groups_data)-1):
-        group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>"       
+        group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>"
+
+    if bg_color == "#62cc31":
+        if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+        else:
+            admin_name = "NOT_LOGGED_IN"
+        CreateLog(text=f"user `{request.form["username"]}` has been added by admin `{admin_name}`!", severity=0, category="SystemLogs/Users")
+
     return serve_html_website("/admin/addUser.html").replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options).replace("RESPONSE", response).replace("FONTCOLOR", font_color).replace("BG_COLOR", bg_color)
 
-@app.route("/admin/remove_user", methods=["POST"])
+@app.route("/admin/remove_user", methods=["POST"]) 
 def remove_user():
     perm_code = handle_users.check_site_perm("/admin/remove_user.html", request.cookies.get("token"))
     if perm_code == "401":
@@ -262,8 +352,18 @@ def remove_user():
         website = dr.site_config_data["UserDisabledSite"]  
         return "", {"Refresh":f"0;url={website}"}
     id = request.json["userId"]
+    log_username = ""
+    for i in range(len(dr.users_data)-1):
+        if int(dr.users_data[i+1][0]) == int(id):
+            log_username = dr.users_data[i+1][1]
+
+    if "|" in request.cookies.get("token"):
+        admin_name = request.cookies.get("token").split("|")[1]
+    else:
+        admin_name = "NOT_LOGGED_IN"
+    CreateLog(text=f"user `{log_username}` has been removed by admin `{admin_name}`!", severity=0, category="SystemLogs/Users")
     handle_users.remove_user(int(id))
-    return "asd"
+    return ""
 
 @app.route("/admin/users.html")
 def users():
@@ -319,7 +419,7 @@ def user_page(p):
                 if username not in usernames:
                     new_users_data[id][1] = username
                 else:
-                    #insert alert message if the name is still in use
+                    #insert alert message if the name is already in use
                     alert = "Username already in use!"
             if email != dr.users_data[id][2]:
                 new_users_data[id][2] = email
@@ -332,6 +432,7 @@ def user_page(p):
             for row in new_users_data:
                 writer.writerow(row)
             f.close()
+            CreateLog(text=f"The user data for user {username} has changed!", severity=1, category=f"Users/{username}")
         elif rtype == "pwd":
             new_hash_data = dr.hash_data
             c_pass = request.form["current_pass"]
@@ -345,6 +446,12 @@ def user_page(p):
                 else:
                     new_hash_data[id][1] = hashlib.md5(bytes(pass1, "UTF-8")).hexdigest()
                     alert = "Data Changed, Logging out"
+                    username = ""
+                    for i in range(len(dr.users_data)-1):
+                        if int(dr.users_data[i+1][0]) == int(id):
+                            username = dr.users_data[i+1][1]
+                            break
+                    CreateLog(text=f"The password for user {username} has changed!", severity=1, category=f"Users/{username}")
             f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
             writer = csv.writer(f)
             for row in new_hash_data:
@@ -360,7 +467,7 @@ def user_page(p):
     if alert == "Data Changed, Logging out":
         return "Data Changed, Logging out!", {"Refresh":"2; url=/signout.html"}
     else:
-        return ret        
+        return ret
 
 #Handle admin user modify
 @app.route("/admin/modifyUser/<path:p>", methods=["GET","POST"])
@@ -410,6 +517,12 @@ def admin_user_page(p):
             for row in new_users_data:
                 writer.writerow(row)
             f.close()
+            
+            if "|" in request.cookies.get("token"):
+                admin_name = request.cookies.get("token").split("|")[1]
+            else:
+                admin_name = "NOT_LOGGED_IN"
+            CreateLog(text=f"The user data for user {username} has been changed by admin `{admin_name}`", severity=1, category=f"Users/{username}")
         elif rtype == "pwd":
             new_hash_data = dr.hash_data
             pass1 = request.form["password1"]
@@ -419,6 +532,17 @@ def admin_user_page(p):
             else:
                     new_hash_data[id][1] = hashlib.md5(bytes(pass1, "UTF-8")).hexdigest()
                     alert = "Data Changed, Logging out"
+                    username = ""
+                    for i in range(len(dr.users_data)-1):
+                        if int(dr.users_data[i+1][0]) == int(id):
+                            username = dr.users_data[i+1][1]
+                            break
+                    
+                    if "|" in request.cookies.get("token"):
+                        admin_name = request.cookies.get("token").split("|")[1]
+                    else:
+                        admin_name = "NOT_LOGGED_IN"
+                    CreateLog(text=f"The password for user {username} has been changed by admin `{admin_name}`!", severity=1, category=f"Users/{username}")
             f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
             writer = csv.writer(f)
             for row in new_hash_data:
@@ -509,6 +633,8 @@ def deleteRole(id):
         website = dr.site_config_data["UserDisabledSite"]  
         return "", {"Refresh":f"0;url={website}"}
     
+    #for logs
+    role_name = dr.roles_data[int(id)][2]
     #delete role
     new_role_data = dr.roles_data
     new_role_data.pop(int(id))
@@ -522,7 +648,7 @@ def deleteRole(id):
             roles.pop(roles.index(id))
             new_user_data[i+1][1] = roles
 
-    #record the old, and new indexes of roles, so we can reassing roles for users later (to avoid a role's id shifting)
+    #record the old, and new indexes of roles, so we can reassign roles for users later (to avoid a role's id shifting)
     index_pairs = {}
     #reindex existing roles
     ind = 1
@@ -556,6 +682,13 @@ def deleteRole(id):
         writer.writerow(row)
     f.close()            
 
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+
+
+    CreateLog(f"Role `{role_name}` has been deleted by admin `{admin_name}`!", 1, category="SystemLogs/Roles_Groups")
     return "Refreshing!", {"Refresh": "5; url=/admin/role_manager.html"}
 
 @app.route("/admin/changeRoles", methods=["POST"])
@@ -603,6 +736,11 @@ def changeRoles():
         for row in new_roles:
             writer.writerow(row)
         f.close()
+        if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+        else:
+            admin_name = "NOT_LOGGED_IN"
+        CreateLog(f"Admin `{admin_name}` modified some roles!", 1, category="SystemLogs/Roles_Groups")
         return "No Errors! Changes saved successfully!, redirecting in 4 seconds...", {"Refresh":"4;url=/admin/role_manager.html"}
     elif n_of_errors <= 3:
         return errors + "3 or less errors, redirecting in 10 seconds...", {"Refresh":"10;url=/admin/role_manager.html"}
@@ -647,6 +785,9 @@ def deleteGroup(id):
         website = dr.site_config_data["UserDisabledSite"]  
         return "", {"Refresh":f"0;url={website}"}
     
+    #for logs
+    group_name = dr.groups_data[int(id)][2]
+
     #delete group
     new_group_data = dr.groups_data
     new_group_data.pop(int(id))
@@ -694,6 +835,11 @@ def deleteGroup(id):
         writer.writerow(row)
     f.close() 
 
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Group `{group_name}` has been deleted by admin `{admin_name}`!", 1, category="SystemLogs/Roles_Groups")
     return "Refreshing!", {"Refresh": "5; url=/admin/group_manager.html"}    
 
 #change groups
@@ -742,6 +888,11 @@ def changeGroups():
         for row in new_groups:
             writer.writerow(row)
         f.close()
+        if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+        else:
+            admin_name = "NOT_LOGGED_IN"
+        CreateLog(f"Admin `{admin_name}` modified some groups!", 1, category="SystemLogs/Roles_Groups")
         return "No Errors! Changes saved successfully!, redirecting in 4 seconds...", {"Refresh":"4;url=/admin/group_manager.html"}
     elif n_of_errors <= 3:
         return errors + "3 or less errors, redirecting in 10 seconds...", {"Refresh":"10;url=/admin/group_manager.html"}
@@ -778,7 +929,7 @@ def add_role_post():
         existing_names.append(new_roles[i+1][2])
 
     if name in existing_names:
-        return "Name is Already Taken! Redirecting in 5...", {"Refresh":"5;url=/admin/add_role.html"}
+        return "Name is Already Taken! Redirecting in 5...", {"Refresh":"5;url=/admin/role_manager.html"}
     
     id = len(new_roles)
 
@@ -789,6 +940,11 @@ def add_role_post():
     for row in new_roles:
         writer.writerow(row)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Role `{name}` has been created by admin `{admin_name}`!", 0, category="SystemLogs/Roles_Groups")
     return "Role Added! Redirecting in 5...", {"Refresh":"5;url=/admin/add_role.html"}
 
 #add group post
@@ -832,7 +988,13 @@ def add_group_post():
     for row in new_groups:
         writer.writerow(row)
     f.close()
-    return "group Added! Redirecting in 5...", {"Refresh":"5;url=/admin/add_group.html"}    
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Group `{name}` has been created by admin `{admin_name}`!", 0, category="SystemLogs/Roles_Groups")
+    return "Group Added! Redirecting in 5...", {"Refresh":"5;url=/admin/group_manager.html"}    
+
 
 #handle site perms list page
 @app.route("/admin/site_perms.html")
@@ -854,6 +1016,8 @@ def site_perms():
         #ENDPOINTS MUST START WITH /
         perms += f"<tr><td class='endpoint_td'>{endpoint}</td><td class='al_td'>{dr.site_perm_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modify_site_perm/{endpoint[1:]}'>Modify</a></td><td class='del_td'><button onclick=\"location.href=\'/admin/delete_site_perm/{endpoint[1:]}\'\">Delete Rule</button></td></tr>"
     return serve_html_website("/admin/site_perms.html").replace("PERMS", perms)
+
+## HERE WE ARE WITH THE LOGS ##
 
 #delete site perm rule
 @app.route("/admin/delete_site_perm/<path:p>")
@@ -879,6 +1043,11 @@ def delete_site_perm(p):
     for row in new_site_perms:
         writer.writerow(row)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Site perm `{p}` has been deleted by admin `{admin_name}`", 1, "SystemLogs/Site_Perms")
     return "Changes Made! Refreshing...", {"Refresh":"6;url=/admin/site_perms.html"}        
 
 #Modify site permissions
@@ -985,6 +1154,11 @@ def modify_perm():
     for row in new_perms:
         writer.writerow(row)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Site perm `{endpoint}` has been modified by admin `{admin_name}`", 1, "SystemLogs/Site_Perms")
     return "Rule modified!", {"Refresh": "2; url=/admin/site_perms.html"}
 
 #add site permissions
@@ -1072,6 +1246,11 @@ def add_perm():
     for row in new_perms:
         writer.writerow(row)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Site perm `{endpoint}` has been added by admin `{admin_name}`", 0, "SystemLogs/Site_Perms")
     return "Perm added succesfully!", {"Refresh":"2;url=/admin/site_perms.html"}
 
 @app.route("/admin/change_config.html")
@@ -1130,6 +1309,11 @@ def del_conf(p):
     f = open("./data/site_configs.json", "w")
     f.write(newfile)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Config rule `{p}` has been removed by admin `{admin_name}`", 1, "SystemLogs/Configs")
     return "Changes made!", {"Refresh": "3; url=/admin/change_config.html"}
 
 @app.route("/admin/add_conf/", methods=["POST"])
@@ -1169,6 +1353,11 @@ def add_conf():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Config rule `{key}` has been added by admin `{admin_name}`", 0, "SystemLogs/Configs")
     return "Config added!", {"Refresh": "2;/admin/change_config.html"}
 
 @app.route("/admin/change_conf/", methods=["POST"])
@@ -1199,6 +1388,11 @@ def change_conf():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Admin `{admin_name}` has modified some configs", 1, "SystemLogs/Configs")
     return "Config changed!", {"Refresh": "2;/admin/change_config.html"}
 
 #plugin manager website
@@ -1282,6 +1476,8 @@ def reload_pl_site():
     reload_plugins()
     return "Reloading...", {"Refresh":"2;url=/admin/plugin_manager.html"}
 
+
+
 @app.route("/admin/plugin_sheet/<path:p>")
 def plugin_sheet(p):
     perm_code = handle_users.check_site_perm("/admin/plugin_sheet/" + p, request.cookies.get("token"))
@@ -1338,6 +1534,8 @@ def plugin_sheet(p):
 
     return serve_html_website("/admin/plugin_sheet.html").replace("VERSION", version).replace("PATH", path).replace("DESCRIPTION", description).replace("NAME", p).replace("CONFIGS", conf)
 
+
+
 @app.route("/admin/delete_pl_config/<path:pl_name>/<path:conf_name>")
 def delete_pl_config(pl_name, conf_name):
     perm_code = handle_users.check_site_perm(f"/admin/delete_pl_config/{pl_name}/{conf_name}", request.cookies.get("token"))
@@ -1371,6 +1569,59 @@ def delete_pl_config(pl_name, conf_name):
     f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
     f.write(newfile)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin config rule `{conf_name}` of plugin `{pl_name}` has been deleted by admin `{admin_name}`", 1, "SystemLogs/Plugins/Configs")
+    return "Changes made!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+
+@app.route("/admin/add_pl_config/", methods=["POST"])
+def add_pl_config():
+    perm_code = handle_users.check_site_perm(f"/admin/add_pl_config/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    pl_name = request.form["__pl_name__"]
+    key = request.form["k"]
+    value = request.form["v"]
+    key = key.replace(" ", "")
+    value = value.replace(" ", "")
+    if key == "" or value == "":
+        return "Both key, and value must be a valid string, without spaces!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json")
+    newfile = ""
+    for line in f.readlines():
+        try:
+            if key != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                newfile += line
+            else:
+                return "Config already exists!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}       
+        except:
+            pass
+    #we delete the \n} from the end to make room for new element, cause last element needs a comma; gets added back
+    newfile = newfile[:-2]
+    #added weirdly cause f string bs
+    newfile += f",\n\"{key}\":\"{value}\"\n" + "}"
+
+    f.close()
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
+    f.write(newfile)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin config rule `{key}` of plugin `{pl_name}` has been added by admin `{admin_name}`", 0, "SystemLogs/Plugins/Configs")
     return "Changes made!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
 
 @app.route("/admin/change_pl_config/", methods=["POST"])
@@ -1402,7 +1653,14 @@ def change_pl_conf():
     f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
     f.write(jsonobj)
     f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin config rules of plugin `{pl_name}` have been changed by admin `{admin_name}`", 1, "SystemLogs/Plugins/Configs")
     return "Config changed!", {"Refresh": f"2;url=/admin/plugin_sheet/{pl_name}"}
+
+
 
 @app.route("/admin/changePluginStatus/", methods=["POST"])
 def change_pl_stat():
@@ -1441,8 +1699,13 @@ def change_pl_stat():
     time.sleep(int(reload_time))
 
     reload_plugins()
-    CreateLog(f"Plugin {name} got {action.lower()}d", 0, "SystemLogs/PluginEnables")
+    if "|" in request.cookies.get("token"):
+                admin_name = request.cookies.get("token").split("|")[1]
+    else:
+                admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin {name} got {action.lower()}d by admin `{admin_name}`", 0, "SystemLogs/Plugins/Enables")
     return "Status changed", {"Refresh":"0;url=/admin/plugin_manager.html"}
+
 
 @app.route("/admin/removePlugin/", methods=["POST"])
 def remove_plugin():
@@ -1463,15 +1726,29 @@ def remove_plugin():
         confirmed = request.form["confirm"]
         if confirmed == "1":
             #confirmed, delete
-            os.rmdir("./plugins/" + name)
+            shutil.rmtree("./plugins/" + name)
+            if "|" in request.cookies.get("token"):
+                admin_name = request.cookies.get("token").split("|")[1]
+            else:
+                admin_name = "NOT_LOGGED_IN"
+            CreateLog(f"Plugin `{name}` got removed by admin `{admin_name}`", 1, "SystemLogs/Plugins/Removal")
             return "Plugin removed, redirecting...", {"Refresh":"3;url=/admin/plugin_manager.html"}
+        else:
+            raise(Exception("non-1-confirm"))
     except Exception as e:
         #nah, get confirm
-        print(e)    
         return serve_html_website("/admin/plugin_rm_confirm.html").replace("NAME", name)   
 
+@app.route("/api/", methods=["GET"])
+def api_handle_get():
+    return "400 Bad Request; must use POST request"
+
+@app.route("/api/", methods=["POST"])
+def api_handle():
+    return api.handle(request)
+
         
-#plugins with subfolder
+#plugins with subfolders
 @app.route("/plugins/<path:p>", methods=["GET", "POST"])
 def plugin_site_handler(p):
     perm_code = handle_users.check_site_perm(f"/plugins/{p}", request.cookies.get("token"))
@@ -1491,6 +1768,7 @@ def plugin_site_handler(p):
     plname = p.split("/")[0]
     endp = "/" + "/".join(p.split("/")[1:])
     try:
+        CreateLog(f"`{endp}` endpoint of plugin `{plname}` got accessed from {request.remote_addr}", 0, f"Plugins/{plname}")
         return Imported_plugins[plname].load_site(endp, request)
     except KeyError:
         if plname in os.listdir("./plugins/"):
@@ -1517,5 +1795,5 @@ def static_sites(p):
         #user disabled (http code for "locked")
         website = dr.site_config_data["UserDisabledSite"]  
         return "", {"Refresh":f"0;url={website}"}
-    
+
 app.run(debug=True)

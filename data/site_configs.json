@@ -6,5 +6,7 @@
 "LoggingEnabled":"1",
 "LogFolder":"./logs/",
 "LogPrint":"1",
-"PluginDefaultState":"0"
+"PluginDefaultState":"1",
+"NonExistentUserLogs":"0",
+"AutoDisable":"2"
 }

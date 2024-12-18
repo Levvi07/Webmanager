@@ -1,6 +1,7 @@
 import hashlib, csv, os
 import time as t
 import data_reader as dr
+from LLogger import *
 from datetime import datetime,timedelta
 dr.init()
 
@@ -151,14 +152,12 @@ def check_site_perm(site, token):
                     if int(role_pair[int(rid)]) == -1:
                         #user is disabled (http code for "Locked")
                         return "423"
-                        print("disabled")
                     if int(role_pair[int(rid)]) > permLevel:
                         permLevel = int(role_pair[int(rid)])
                 for id in userGroups:
                     if id == "": continue
                     #decline access if a disabled group is on the user
                     if int(group_pair[int(id)]) == -1:
-                        print("disabled")
                         #user is disabled (http code for "Locked")
                         return "423"
                     if int(group_pair[int(id)]) > permLevel:
@@ -263,21 +262,21 @@ def remove_user(id:int):
             l[i+1][0] = str(i+1)
         datas[key] = l
 
-        #writing all 3 files
-        f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
-        writer = csv.writer(f)
-        for row in datas["users"]:
-            writer.writerow(row)
-        f.close()
+    #writing all 3 files
+    f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in datas["users"]:
+        writer.writerow(row)
+    f.close()
 
-        f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
-        writer = csv.writer(f)
-        for row in datas["pwd_hashes"]:
-            writer.writerow(row)
-        f.close()
+    f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in datas["pwd_hashes"]:
+        writer.writerow(row)
+    f.close()
 
-        f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
-        writer = csv.writer(f)
-        for row in datas["user_perm"]:
-            writer.writerow(row)
-        f.close()
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in datas["user_perm"]:
+        writer.writerow(row)
+    f.close()

@@ -40,3 +40,19 @@ input[value="Remove Plugin"]{
     padding:none !important;
     position:relative;
 }
+
+#valtext{
+    position: relative;
+    left:16%
+}
+
+#add_submit{
+    border:1px black solid;
+    left:1%;
+    margin-top:1%;
+    width:10% !important;
+    height:5.5%;
+    font-size:70%;
+    padding:none !important;
+    position:relative;
+}

@@ -28,7 +28,8 @@ You can add/delete/modify configs through the website, be vary not to delete the
  LoggingEnabled: 1 or 0; tells the program whether to log or not \
  LogFolder: Tells the program where to write logs \
  LogPrint: 1 or 0; Whether the logging program prints to the console or not \
- PluginDefaultState: 1 or 0; when a plugin is first imported its going to either become Enabled if this value is 1 or disabled if its 0 
+ PluginDefaultState: 1 or 0; when a plugin is first imported its going to either become Enabled if this value is 1 or disabled if its 0 \
+ NonExistentUserLogs: 1 or 0; Whether the program makes login logs on non-existent usernames (If this is off and someone has access to logs they may be able to enumerate valid usernames)
 
  ### Plugins
 
@@ -52,7 +53,8 @@ You can add/delete/modify configs through the website, be vary not to delete the
 - Logging may be turned on/off using the config
 - The module logs into the folder specified in the config folder
 - When logging, you must specify a category, a severity, the text of the error
-- When an attempt at creating logs fails, an error log is made in the "\__logging_error__" category
+- In order to test that logging works, press "Test logging" on the logs page
+- In order not to break stuff, backslashes are removed, so the formatting wont cause probllems
 - Usage:
     ```
         from LLogger import *
@@ -62,3 +64,11 @@ You can add/delete/modify configs through the website, be vary not to delete the
         category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service/yyyy-mm-dd.log"
         severity: 0-2 --> 0: [MESSAGE]    1: [WARNING]      2: [ERROR]
         text: whats going to be written in the logs
+
+
+### Auto Disable
+- Used to disable users, after a certain amout of incorrect login tries
+- Set to <=0 to disable
+- A role called "Disabled" must exist for this to function, and its perm level must be set to -1 (or it wont actually disable the users)
+- set AutoDisable config to the number of tries, after which the program should disable a profile
+- __*WARNING*__: ONLY do this if ssh or other contact to the machine is possible, otherwise its possible to lock all accounts, by spamming login requests
