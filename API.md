@@ -15,7 +15,7 @@
 - Returns a token (type str)
 
 
-```
+```json
 {  
     "action": "login",  
     "username":"USERNAME",  
@@ -24,11 +24,12 @@
 ```
 
 ### Sign out
-- Release the active token for security reasons
-- Returns an http code or whatever
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | -------- |
 | token | An active token | "1|admin|3c8ce0623a0b56ca7550d170fcefb6" | x |
+
+- Release the active token for security reasons
+- Returns an http code
 
 ```
 {  
@@ -42,6 +43,18 @@
 - Reloads the plugins through the API
 
 ### Get User Data
+| Name | Description | Example | Required |
+| ---- | ----------- | ------- | -------- |
+| token | An active token | '1|admin|3c8ce0623a0b56ca7550d170fcefb6' | x |
+| ID | The ID of the searched user | 1 |  |
+| Name | The name of the searched user | admin |  |
+| Email | The email of the searched user | admin@example.com | |
+| Full name | The full name of the searched user | Admin Adminton |  |
+| Groups | A group id (only one id at a time) | 1 |  |
+| Roles | A role id (only one id at a time) | 1 |  |
+| Description | A string of description  (snippets dont work, full text is neededd)| 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 |  |
+| IsLoggedIn | Either 0 or 1 shows whether a user is logged in at the moment | 1 |  |
+
 - Used to acquire user data
 - One may either use it without arguments, or filter for any of the following attributes:
     - ID
@@ -52,18 +65,6 @@
     - Roles
     - Description
     - IsLoggedIn
-
-| Name | Description | Example | Required |
-| ---- | ----------- | ------- | -------- |
-| token | An active token | "1|admin|3c8ce0623a0b56ca7550d170fcefb6" | x |
-| ID | The ID of the searched user | 1 |  |
-| Name | The name of the searched user | admin |  |
-| Email | The email of the searched user | admin@example.com | |
-| Full name | The full name of the searched user | Admin Adminton |  |
-| Groups | A group id (only one id at a time) | 1 |  |
-| Roles | A role id (only one id at a time) | 1 |  |
-| Description | A string of description  (snippets dont work, full text is neededd)| "1|admin|3c8ce0623a0b56ca7550d170fcefb6" |  |
-| IsLoggedIn | Either 0 or 1 shows whether a user is logged in at the moment | 1 |  |
 
 ### Add User
 
