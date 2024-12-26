@@ -8,7 +8,7 @@
 
 ### Login
 | Name | Description | Example | Required |
-| ---- | ----------- | ------- | -------- |
+| ---- | ----------- | ------- | :------: |
 | username | A username for a regular user | admin | x |
 | password | A password for a regular user | passw | x |
 
@@ -25,13 +25,13 @@
 
 ### Sign out
 | Name | Description | Example | Required |
-| ---- | ----------- | ------- | -------- |
-| token | An active token | "1|admin|3c8ce0623a0b56ca7550d170fcefb6" | x |
+| ---- | ----------- | ------- | :------: |
+| token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6" | x |
 
 - Release the active token for security reasons
 - Returns an http code
 
-```
+```json
 {  
     "action": "signout",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6"    
@@ -44,8 +44,8 @@
 
 ### Get User Data
 | Name | Description | Example | Required |
-| ---- | ----------- | ------- | -------- |
-| token | An active token | '1|admin|3c8ce0623a0b56ca7550d170fcefb6' | x |
+| ---- | ----------- | ------- | :------: |
+| token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | ID | The ID of the searched user | 1 |  |
 | Name | The name of the searched user | admin |  |
 | Email | The email of the searched user | admin@example.com | |
@@ -99,7 +99,7 @@
 
 ### Get config
 | Name | Description | Example | Required |
-| ---- | ----------- | ------- | -------- |
+| ---- | ----------- | ------- | :------: |
 | config | Get the value of one specific config | TokenExpire |  |
 
 ### Add config
