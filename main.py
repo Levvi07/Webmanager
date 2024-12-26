@@ -221,7 +221,7 @@ def handle_login():
                 dr.refresh_tokens_data()
                 handle_users.record_token(CookieToken.split("|")[0], CookieToken, 1)
         resp.set_cookie(key="token", value=str(token), expires=int(dr.site_config_data["TokenExpire"]), max_age=int(dr.site_config_data["TokenExpire"]))
-        CreateLog(text=f"{token.split("|")[1]} has logged in!", severity=0, category=f"/Users/{token.split("|")[1]}")
+        CreateLog(text=f"{token.split("|")[1]} has logged in from {request.remote_addr} !", severity=0, category=f"/Users/{token.split("|")[1]}")
         #reset unsuccesful login attempts if needed
         new_ad_data = dr.auto_disable_data
         #increase the number of wrong attempts

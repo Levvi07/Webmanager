@@ -17,7 +17,23 @@
 from LLogger import *
 import handle_users
 
-def handle(request):
+actions = {}
+IsWriteAction = {}
+#in theory this shouldnt be a problem as this is not async, and also metthods dont take longer than a few milliseconds
+#there SHOULD be no case of two API calls overwriting each others' data
+data = ""
+request = ""
+
+def action(name, rw=1):
+    def decorator(f):
+        actions[name] = f
+        IsWriteAction[name] = rw
+    return decorator
+
+def handle(req):
+    global data
+    global request
+    request = req
     #try to get json data
     try:
         data = request.json
@@ -35,22 +51,34 @@ def handle(request):
 
     if "token" not in keys and action != "login":
         return "400 Bad Request; token must be set"
-    # determmine action
-    try:
-        token = data["token"]
-    except KeyError:
-        pass
     
-    if action == "login":
-        try:
+    if action in actions:
+        return actions[action]()
+    else:
+        return "400 Bad Request; No such action"
+
+@action("login", 0)
+def login():
+    try:
             username = data["username"]
             password = data["password"]
-        except:
+    except:
             return "400 Bad Request; Not enough data, refer to documentation"
         
-        _,_,_,token = handle_users.login({"username":username, "password":password})
+    _,_,_,token = handle_users.login({"username":username, "password":password})
+    if token == 0:
+        CreateLog(text=f"Unsuccesful login attempt by `{request.form["username"]}` with password `{request.form["password"]}` from {request.remote_addr} through the API!", severity=1, category=f"/Users/{request.form["username"]}")
+        return "401 Unauthorised; Incorrect Data!"
+    else:
+        CreateLog(text=f"User `{request.form["username"]}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{request.form["username"]}")
         return token
-        
 
-    print(data)
-    return data
+@action("signout", 0)
+def signout():
+    try:
+            token = data["token"]
+    except:
+            return "400 Bad Request; Not enough data, refer to documentation"
+    handle_users.record_token(token.split("|")[0],token, 1)
+    CreateLog(text=f"{token.split("|")[1]} has logged out, through the API!", severity=0, category=f"/Users/{token.split("|")[1]}")
+    return "200 OK"
