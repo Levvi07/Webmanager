@@ -100,6 +100,7 @@
 ### Get config
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
+| token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | config | Get the value of one specific config | TokenExpire |  |
 
 ### Add config
