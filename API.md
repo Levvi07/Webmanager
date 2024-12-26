@@ -26,7 +26,7 @@
 ### Sign out
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
-| token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6" | x |
+| token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 
 - Release the active token for security reasons
 - Returns an http code
