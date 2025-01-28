@@ -29,7 +29,8 @@ You can add/delete/modify configs through the website, be vary not to delete the
  LogFolder: Tells the program where to write logs \
  LogPrint: 1 or 0; Whether the logging program prints to the console or not \
  PluginDefaultState: 1 or 0; when a plugin is first imported its going to either become Enabled if this value is 1 or disabled if its 0 \
- NonExistentUserLogs: 1 or 0; Whether the program makes login logs on non-existent usernames (If this is off and someone has access to logs they may be able to enumerate valid usernames)
+ NonExistentUserLogs: 1 or 0; Whether the program makes login logs on non-existent usernames (If this is off and someone has access to logs they may be able to enumerate valid usernames) \
+ APIEnabled: 1 or 0; whether the API is enabled or not
 
  ### Plugins
 

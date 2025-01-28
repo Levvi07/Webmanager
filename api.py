@@ -5,9 +5,9 @@
 # 4. Return standard codes, and data
 # 5. serve tokens and all that (use the proper users, so we can just create an "api user" role)
 # 6. limit access to API so we dont need to use the site_perms here
-# 7. Permission levels: none
-#                       Read-only (can ask for data, cant modify it)
-#                       Write/Read
+# 7. Permission levels: 0 none
+#                       1 Read-only (can ask for data, cant modify it)
+#                       2 Write/Read
 
 # Data must be submitted in the correct form, in json
 # correct arguments would be like:
@@ -19,7 +19,7 @@ import handle_users
 
 actions = {}
 IsWriteAction = {}
-#in theory this shouldnt be a problem as this is not async, and also metthods dont take longer than a few milliseconds
+#in theory this shouldnt be a problem as this is not async, and also metthods dont take longer than a few seconds
 #there SHOULD be no case of two API calls overwriting each others' data
 data = ""
 request = ""
@@ -67,10 +67,10 @@ def login():
         
     _,_,_,token = handle_users.login({"username":username, "password":password})
     if token == 0:
-        CreateLog(text=f"Unsuccesful login attempt by `{request.form["username"]}` with password `{request.form["password"]}` from {request.remote_addr} through the API!", severity=1, category=f"/Users/{request.form["username"]}")
+        CreateLog(text=f"Unsuccesful login attempt by `{username}` with password `{username}` from {request.remote_addr} through the API!", severity=1, category=f"/Users/{username}")
         return "401 Unauthorised; Incorrect Data!"
     else:
-        CreateLog(text=f"User `{request.form["username"]}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{request.form["username"]}")
+        CreateLog(text=f"User `{data["username"]}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{username}")
         return token
 
 @action("signout", 0)

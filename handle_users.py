@@ -11,11 +11,16 @@ def generate_token(userid, name):
 def record_token(userid,token, signout=0):
     new_csv_data = [["ID","token","ValidUntil"]]
     for i in range(len(dr.tokens_data)-1):
+        #need to check so u cant spoof signouts with random tokens
+        old_token = ""
         if dr.tokens_data[i+1][0] == str(userid):
+            old_token = dr.token_data[1]
             continue
         new_csv_data.append(dr.tokens_data[i+1])
     if signout:
         expiry = datetime.today() - timedelta(0,int(dr.site_config_data["TokenExpire"]))
+        if old_token != token:
+            return "400 Bad Request; Non-existent token"
     else:
         expiry = datetime.today() + timedelta(0,int(dr.site_config_data["TokenExpire"]))        
     new_csv_data.append([userid,token,expiry])

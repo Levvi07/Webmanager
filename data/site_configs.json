@@ -8,5 +8,6 @@
 "LogPrint":"1",
 "PluginDefaultState":"1",
 "NonExistentUserLogs":"0",
-"AutoDisable":"2"
+"AutoDisable":"2",
+"APIEnabled":"1"
 }

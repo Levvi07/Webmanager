@@ -1,0 +1,4 @@
+19:04:06 [ERROR] Cant initalise module 'second_plugin' because __plugin_init__.py is not present
+19:04:06 [WARNING] global plugin configs for Newpluginlol dont exist
+19:04:06 [ERROR] Cant initalise module 'second_plugin' because __plugin_init__.py is not present
+19:04:06 [WARNING] global plugin configs for Newpluginlol dont exist

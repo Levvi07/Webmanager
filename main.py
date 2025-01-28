@@ -151,9 +151,12 @@ def signout():
     token = request.cookies.get("token")
     if token == None:
         return "Token is not set, you have to log in first! Redirecting...", {"Refresh": "2; url=./login.html"}
-    handle_users.record_token(token.split("|")[0],token, 1)
-    resp = make_response("Signed out successfully! Redirecting...")
-    resp.set_cookie("token", "", max_age=0)
+    signout_response = handle_users.record_token(token.split("|")[0],token, 1)
+    if signout_response == "400 Bad Request; Non-existent token":
+        resp = make_response("Non-existent Token! Redirecting...")
+    else:
+        resp = make_response("Signed out successfully! Redirecting...")
+        resp.set_cookie("token", "", max_age=0)
     CreateLog(text=f"{token.split("|")[1]} has logged out!", severity=0, category=f"/Users/{token.split("|")[1]}")
     return resp, {"Refresh": "2; url=./login.html"}
 #handle css
@@ -1741,10 +1744,14 @@ def remove_plugin():
 
 @app.route("/api/", methods=["GET"])
 def api_handle_get():
+    if str(dr.site_config_data["APIEnabled"]) != "1":
+        return "400 Bad Request; API is disabled"
     return "400 Bad Request; must use POST request"
 
 @app.route("/api/", methods=["POST"])
 def api_handle():
+    if str(dr.site_config_data["APIEnabled"]) != "1":
+        return "400 Bad Request; API is disabled"
     return api.handle(request)
 
         
