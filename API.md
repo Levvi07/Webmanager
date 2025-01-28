@@ -68,7 +68,7 @@
 | Roles | A role id (only one id at a time) | 1 |  |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
 | IsLoggedIn | Either 0 or 1 shows whether a user is logged in at the moment | 1 |  |
-| API_access | 1 or 0; Whether the user has access to the API | 1 | x |
+| API_access | 1 or 0; Whether the user has access to the API | 1 |  |
 
 - Used to acquire user data
 - One may either use it without arguments, or filter for any of the following attributes:
@@ -80,6 +80,23 @@
     - Roles
     - Description
     - IsLoggedIn
+
+- the id(s) of roles/groups may be either given as an integer or an array of integers
+
+```json
+{  
+    "action": "get_user",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":"1",
+    "name":"admin",
+    "email":"admin@example.com",
+    "full_name":"Admin Adminton",
+    "groups":[1,2,3],
+    "roles":2,
+    "description":"Is very admin",
+    "IsLoggedIn":1
+}  --> json
+```
 
 ### Add User
 
@@ -95,7 +112,21 @@
 | Description | A string of description  (snippets dont work, full text is needed)| Description |  |
 | API_access | 1 or 0; Whether the user has access to the API | 1 | x |
 
-
+```json
+{  
+    "action": "get_user",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":"1",
+    "name":"admin",
+    "email":"admin@example.com",
+    "full_name":"Admin Adminton",
+    "password":"PASSWORD123",
+    "groups":[1,2,3],
+    "roles":2,
+    "description":"Is very admin",
+    "API_access":1
+}  --> json
+```
 
 ### Remove User
 
@@ -103,6 +134,14 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | ID | A valid user id | 1 | x |
+
+```json
+{  
+    "action": "remove_user",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1
+}  --> str
+```
 
 ### Modify User
 
@@ -116,10 +155,25 @@
 | Groups | A group id (only one id at a time) | 1 |  |
 | Roles | A role id (only one id at a time) | 1 |  |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
-| API_access | 1 or 0; Whether the user has access to the API | 1 | x |
+| API_access | 1 or 0; Whether the user has access to the API | 1 |  |
 
 - Set fields get modified, unset fields stay the same
 - Not possible to modify password, for safety reasons
+
+```json
+{  
+    "action": "get_user",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":"1",
+    "name":"admin",
+    "email":"admin@example.com",
+    "full_name":"Admin Adminton",
+    "groups":[1,2,3],
+    "roles":2,
+    "description":"Is very admin",
+    "API_access":1
+}  --> str
+```
 
 ### Get Role data
 
