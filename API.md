@@ -198,7 +198,7 @@
     "name":"admin",
     "perm_level":2,
     "description":"Admin role"
-}  --> str
+}  --> json
 ```
 
 ### Add Role
@@ -207,7 +207,7 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | Name | The name of the searched role | admin | x |
-| Perm_level | The perm level of the role | 5 | x |
+| Perm_level | The perm level of the role | 5 |  |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
 
 - When Perm_level is not set it defaults to -1
@@ -284,7 +284,7 @@
     "name":"admin",
     "perm_level":2,
     "description":"Admin group"
-}  --> str
+}  --> json
 ```
 
 ### Add Group
@@ -293,7 +293,7 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | Name | The name of the searched group | admin | x |
-| Perm_level | The perm level of the group | 5 | x |
+| Perm_level | The perm level of the group | 5 |  |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
 
 - When Perm_level is not set it defaults to -1
@@ -370,7 +370,7 @@
     "access_groups_id":1,
     "access_users_id":-1,
     "perm_level":2
-}  --> str
+}  --> json
 ```
 
 ### Create a site access rule
@@ -460,7 +460,7 @@
     "action": "get_config",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "config":["AutoDisable", "LoggingEnabled"]
-}  --> str || json
+}  --> json
 ```
 
 ### Add config

@@ -23,9 +23,10 @@ IsWriteAction = {}
 #there SHOULD be no case of two API calls overwriting each others' data
 data = ""
 request = ""
-
-def action(name, rw=1):
+required_keys_list = {}
+def action(name, rw=1, required_keys=[]):
     def decorator(f):
+        required_keys_list[name] = required_keys
         actions[name] = f
         IsWriteAction[name] = rw
     return decorator
@@ -52,19 +53,21 @@ def handle(req):
     if "token" not in keys and action != "login":
         return "400 Bad Request; token must be set"
     
+    for rk in required_keys_list[action]:
+        try:
+            data[rk]
+        except:
+            return "400 Bad Request; Not enough data, refer to documentation"
+
     if action in actions:
         return actions[action]()
     else:
         return "400 Bad Request; No such action"
 
-@action("login", 0)
+@action("login", 0, ["username", "password"])
 def login():
-    try:
-            username = data["username"]
-            password = data["password"]
-    except:
-            return "400 Bad Request; Not enough data, refer to documentation"
-        
+    username = data["username"]
+    password = data["password"]
     _,_,_,token = handle_users.login({"username":username, "password":password})
     if token == 0:
         CreateLog(text=f"Unsuccesful login attempt by `{username}` with password `{username}` from {request.remote_addr} through the API!", severity=1, category=f"/Users/{username}")
@@ -73,12 +76,9 @@ def login():
         CreateLog(text=f"User `{data["username"]}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{username}")
         return token
 
-@action("signout", 0)
+@action("signout", 0, ["token"])
 def signout():
-    try:
-            token = data["token"]
-    except:
-            return "400 Bad Request; Not enough data, refer to documentation"
-    handle_users.record_token(token.split("|")[0],token, 1)
+    token = data["token"]
+    ret = handle_users.record_token(token.split("|")[0], token, 1)
     CreateLog(text=f"{token.split("|")[1]} has logged out, through the API!", severity=0, category=f"/Users/{token.split("|")[1]}")
-    return "200 OK"
+    return ret
