@@ -114,7 +114,7 @@
 
 ```json
 {  
-    "action": "get_user",  
+    "action": "add_user",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "ID":"1",
     "name":"admin",
@@ -162,7 +162,7 @@
 
 ```json
 {  
-    "action": "get_user",  
+    "action": "modify_user",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "ID":"1",
     "name":"admin",
@@ -190,16 +190,38 @@
     - `1+` means the `perm_level>=1`
     - `1-` means the `perm_level<=1`
 
+```json
+{  
+    "action": "get_role",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1,
+    "name":"admin",
+    "perm_level":2,
+    "description":"Admin role"
+}  --> str
+```
+
 ### Add Role
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | Name | The name of the searched role | admin | x |
-| Perm_level | The perm level of the role | 5 |  |
+| Perm_level | The perm level of the role | 5 | x |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
 
 - When Perm_level is not set it defaults to -1
+
+```json
+{  
+    "action": "add_role",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1,
+    "name":"admin",
+    "perm_level":2,
+    "description":"Admin role"
+}  --> str
+```
 
 ### Remove Role
 
@@ -207,6 +229,14 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | ID | The ID of the searched role | admin | x |
+
+```json
+{  
+    "action": "remove_role",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1
+}  --> str
+```
 
 ### Modify Role
 
@@ -219,6 +249,17 @@
 | Description | A string of description  (snippets dont work, full text is needed)| Description |  |
 
 - Set fields get modified, unset fields stay the same
+
+```json
+{  
+    "action": "modify_role",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1,
+    "name":"admin",
+    "perm_level":2,
+    "description":"Admin role"
+}  --> str
+```
 
 ### Get Group data
 
@@ -235,16 +276,38 @@
     - `1+` means the `perm_level>=1`
     - `1-` means the `perm_level<=1`
 
+```json
+{  
+    "action": "get_group",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1,
+    "name":"admin",
+    "perm_level":2,
+    "description":"Admin group"
+}  --> str
+```
+
 ### Add Group
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | Name | The name of the searched group | admin | x |
-| Perm_level | The perm level of the group | 5 |  |
+| Perm_level | The perm level of the group | 5 | x |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
 
 - When Perm_level is not set it defaults to -1
+
+```json
+{  
+    "action": "add_group",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1,
+    "name":"admin",
+    "perm_level":2,
+    "description":"Admin group"
+}  --> str
+```
 
 ### Remove Group
 
@@ -252,6 +315,14 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | ID | The ID of the searched group | admin | x |
+
+```json
+{  
+    "action": "remove_group",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1
+}  --> str
+```
 
 ### Modify Group
 
@@ -265,12 +336,42 @@
 
 - Set fields get modified, unset fields stay the same
 
+```json
+{  
+    "action": "modify_group",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "ID":1,
+    "name":"admin",
+    "perm_level":2,
+    "description":"Admin group"
+}  --> str
+```
+
 ### Get site access rule data
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | endpoint | The endpoint | /admin/* | x |
+
+- access_role/groups/users_id must be either a single integer or an arary of them
+- When searching by perm level 3 filters are availabe:
+    - `1` means the `perm_level==1`
+    - `1+` means the `perm_level>=1`
+    - `1-` means the `perm_level<=1`
+
+```json
+{  
+    "action": "get_access_rule",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "endpoint":"/admin/*",
+    "AccessLevel":0,
+    "access_roles_id":[1,2,3],
+    "access_groups_id":1,
+    "access_users_id":-1,
+    "perm_level":2
+}  --> str
+```
 
 ### Create a site access rule
 
@@ -284,6 +385,20 @@
 | access_users_id | A group of user ids that may be granted access | user1;user2;user3 |  |
 | perm_level | sets the access mode of  the endpoint (see docs) | 1 | x |
 
+- access_role/groups/users_id must be either a single integer or an arary of them
+
+```json
+{  
+    "action": "add_access_rule",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "endpoint":"/admin/*",
+    "AccessLevel":0,
+    "access_roles_id":[1,2,3],
+    "access_groups_id":1,
+    "access_users_id":-1,
+    "perm_level":2
+}  --> str
+```
 
 ### Remove a site access rule
 
@@ -291,6 +406,14 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | endpoint | The endpoint | /admin/* | x |
+
+```json
+{  
+    "action": "remove_access_rule",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "endpoint":"/admin/*"
+}  --> str
+```
 
 ### Modify a site permission rule
 
@@ -306,6 +429,20 @@
 
 - Endpoints are not to be modified, create a new rule for that
 - Set fields get modified, unset fields stay the same
+- access_role/groups/users_id must be either a single integer or an arary of them
+
+```json
+{  
+    "action": "add_access_rule",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "endpoint":"/admin/*",
+    "AccessLevel":0,
+    "access_roles_id":[1,2,3],
+    "access_groups_id":1,
+    "access_users_id":-1,
+    "perm_level":2
+}  --> str
+```
 
 ### Get config
 
@@ -314,7 +451,17 @@
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | config | Get the value of one or more specific configs | TokenExpire;UserDisabledSite |  |
 
-- In order to retrieve multiple pieces of config seperate the names with semicolons, in that case the api will return a json object
+- In order to retrieve multiple pieces of config use an array, in that case the api will return a json object
+- One may also just pass 1 argument for it as a string
+- If no argument is passed to it, the API will return all the configs
+
+```json
+{  
+    "action": "get_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "config":["AutoDisable", "LoggingEnabled"]
+}  --> str || json
+```
 
 ### Add config
 
@@ -324,12 +471,29 @@
 | key | Set the key of the new config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
 
+```json
+{  
+    "action": "add_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "key":"new_config",
+    "value":"this is the value"
+}  --> str || json
+```
+
 ### Delete config
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | key | Set the key of the new config | NewConfig | x |
+
+```json
+{  
+    "action": "remove_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "key":"old_config"
+}  --> str || json
+```
 
 ### Change config
 
@@ -338,6 +502,15 @@
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | key | Set the key of the new config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
+
+```json
+{  
+    "action": "change_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "key":"new_config",
+    "value":"this is the modified value"
+}  --> str || json
+```
 
 ### Get pluginlist
 
