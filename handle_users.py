@@ -14,7 +14,7 @@ def record_token(userid,token, signout=0):
         #need to check so u cant spoof signouts with random tokens
         old_token = ""
         if dr.tokens_data[i+1][0] == str(userid):
-            old_token = dr.tokens_data[1]
+            old_token = dr.tokens_data[i+1][1]
             continue
         new_csv_data.append(dr.tokens_data[i+1])
     if signout:

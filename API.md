@@ -3,7 +3,7 @@
 - Data must be supplied in json format
 - An action attribute must be set, for all requests 
 - Token is necessary for all requests (except login)
-- It's also advised to create a dedicated API user
+- It's also advised to create a dedicated API user, because tokens get funky when you log in through the web and API at the same time
 ## Actions
 
 ### Login
@@ -18,7 +18,6 @@
 ```json
 {  
     "action": "login",  
-    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "username":"USERNAME",  
     "password":"PASSWORD"  
 }  --> str
@@ -50,7 +49,7 @@
 - Returns an HTTP code
 
 ```json
-{  
+{
     "action": "reload_plugins",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6"
 }  --> str
@@ -477,7 +476,7 @@
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "key":"new_config",
     "value":"this is the value"
-}  --> str || json
+}  --> str
 ```
 
 ### Delete config
@@ -492,7 +491,7 @@
     "action": "remove_config",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "key":"old_config"
-}  --> str || json
+}  --> str
 ```
 
 ### Change config
@@ -509,7 +508,7 @@
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "key":"new_config",
     "value":"this is the modified value"
-}  --> str || json
+}  --> str
 ```
 
 ### Get pluginlist
@@ -520,6 +519,13 @@
 
 - Returns a list of ALL the plugins
 
+```json
+{  
+    "action": "get_pl_list",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6"    
+}  --> json
+```
+
 ### Get plugin data
 
 | Name | Description | Example | Required |
@@ -527,7 +533,16 @@
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
 
+- Name must be a json array
 - Returns data about 1 or more plugins as seperate objects => [{data1},{data2},{data3}]
+
+```json
+{  
+    "action": "get_pl",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "name": ["plugin1", "plugin2"]
+}  --> json
+```
 
 ### Change plugin status
 
@@ -542,6 +557,15 @@
     - 1: Enabled
     - Left empty: Status gets flipped, if plugin was enabled it gets disabled, if it was disabled it gets enabled 
 
+```json
+{  
+    "action": "change_pl_status",
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "name": "plugin1",
+    "enabled":0
+}  --> str
+```
+
 ### Add plugin config
 
 | Name | Description | Example | Required |
@@ -550,6 +574,16 @@
 | name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
 | key | Set the key of the new config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
+
+```json
+{  
+    "action": "add_pl_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "name": "plugin1",
+    "key":"New_key",
+    "value":0
+}  --> str
+```
 
 ### Change plugin config
 
@@ -560,6 +594,16 @@
 | key | Set the key of the new config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
 
+```json
+{  
+    "action": "change_pl_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "name": "plugin1",
+    "key":"New_key",
+    "value":0
+}  --> str
+```
+
 ### Remove plugin config
 
 | Name | Description | Example | Required |
@@ -567,3 +611,12 @@
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
 | key | Set the key of the new config | NewConfig | x |
+
+```json
+{  
+    "action": "change_pl_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "name": "plugin1",
+    "key":"New_key"
+}  --> str
+```

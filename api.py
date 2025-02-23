@@ -16,6 +16,10 @@
 # all other data -- only in the correct function, the api will return an HTTP code for insufficient data when enough data isnt given
 from LLogger import *
 import handle_users
+import csv
+
+#passed by main.py, used for reloading plugins
+reload_plugins_func = ""
 
 actions = {}
 IsWriteAction = {}
@@ -53,27 +57,99 @@ def handle(req):
     if "token" not in keys and action != "login":
         return "400 Bad Request; token must be set"
     
-    for rk in required_keys_list[action]:
-        try:
-            data[rk]
-        except:
-            return "400 Bad Request; Not enough data, refer to documentation"
-
     if action in actions:
+        for rk in required_keys_list[action]:
+            try:
+                data[rk]
+            except:
+                return "400 Bad Request; Not enough data, refer to documentation"
         return actions[action]()
     else:
         return "400 Bad Request; No such action"
-
+    
 @action("login", 0, ["username", "password"])
 def login():
     username = data["username"]
     password = data["password"]
     _,_,_,token = handle_users.login({"username":username, "password":password})
     if token == 0:
-        CreateLog(text=f"Unsuccesful login attempt by `{username}` with password `{username}` from {request.remote_addr} through the API!", severity=1, category=f"/Users/{username}")
+        MakeLog = 1
+        if dr.site_config_data["NonExistentUserLogs"] == "0":
+            names = []
+            for i in range(len(dr.users_data)-1):
+                names.append(dr.users_data[i+1][1])
+            if username not in names:
+                MakeLog = 0
+        if MakeLog:
+            CreateLog(text=f"Unsuccesful login attempt by `{username}` with password `{username}` from {request.remote_addr} through the API!", severity=1, category=f"/Users/{username}")
+            new_ad_data = dr.auto_disable_data
+            #increase the number of wrong attempts
+            if username in new_ad_data.keys():
+                new_ad_data[username] = str(int(new_ad_data[username]) + 1)
+            else:
+                new_ad_data[username] = "1"
+
+            jsonobj = "{\n"
+            clen = len(new_ad_data)
+            keys = list(new_ad_data)
+            for i in range(clen):
+                jsonobj += f"\"{keys[i]}\":\"{new_ad_data[keys[i]]}\""
+                if i != clen - 1:
+                    jsonobj += ",\n"
+                else:
+                    jsonobj += "\n}"    
+            f = open("./data/auto_disable.json", "w")
+            f.write(jsonobj)
+            f.close()
+
+            try:
+                attempt_limit = int(dr.site_config_data["AutoDisable"])
+            except:
+                attempt_limit = 0
+                CreateLog("AutoDisable must be a number", 2, "SystemLogs/Configs")
+            if int(new_ad_data[username]) >= attempt_limit:
+                CreateLog(f"User `{username}` got disabled by Auto Disable system", 1, f"Users/{username}")
+                CreateLog(f"User `{username}` got disabled by Auto Disable system", 1, f"SystemLogs/AutoDisable")
+                #disabling user
+                role_id = 0
+                for i in range(len(dr.roles_data)-1):
+                    if dr.roles_data[i+1][2] == "Disabled":
+                        role_id=i+1
+
+                user_id = 0
+                for i in range(len(dr.users_data)-1):
+                    if dr.users_data[i+1][1] == username:
+                        user_id = i+1
+
+                new_user_perms = dr.user_perm_data
+                if role_id not in new_user_perms[user_id][1].split(";"):
+                    new_user_perms[user_id][1] = new_user_perms[user_id][1] + f";{str(role_id)}"
+
+                f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+                writer = csv.writer(f)
+                for row in new_user_perms:
+                    writer.writerow(row)
+                f.close()
         return "401 Unauthorised; Incorrect Data!"
     else:
         CreateLog(text=f"User `{data["username"]}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{username}")
+        #reset unsuccesful login attempts if needed
+        new_ad_data = dr.auto_disable_data
+        #increase the number of wrong attempts
+        new_ad_data[username] = "0"
+
+        jsonobj = "{\n"
+        clen = len(new_ad_data)
+        keys = list(new_ad_data)
+        for i in range(clen):
+            jsonobj += f"\"{keys[i]}\":\"{new_ad_data[keys[i]]}\""
+            if i != clen - 1:
+                jsonobj += ",\n"
+            else:
+                jsonobj += "\n}"    
+        f = open("./data/auto_disable.json", "w")
+        f.write(jsonobj)
+        f.close()
         return token
 
 @action("signout", 0, ["token"])
@@ -82,3 +158,8 @@ def signout():
     ret = handle_users.record_token(token.split("|")[0], token, 1)
     CreateLog(text=f"{token.split("|")[1]} has logged out, through the API!", severity=0, category=f"/Users/{token.split("|")[1]}")
     return ret
+
+@action("reload_plugins", 0, ["token"])
+def reload_plugins():
+    reload_plugins_func()
+    return "rleoad"

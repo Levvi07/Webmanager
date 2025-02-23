@@ -87,6 +87,8 @@ def reload_plugins():
     CreateLog("All plugins have been reloaded", 0, "SystemLogs/Plugins/Reload")
 #loading plugins before execution
 reload_plugins()
+#pass to API so it can reload too
+api.reload_plugins_func = reload_plugins
 
 def serve_html_website(route):
     if not os.path.exists("./templates/" + route):
