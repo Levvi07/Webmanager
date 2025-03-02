@@ -132,7 +132,7 @@ def login():
                 f.close()
         return "401 Unauthorised; Incorrect Data!"
     else:
-        CreateLog(text=f"User `{data["username"]}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{username}")
+        CreateLog(text=f"User `{data['username']}` has logged in from {request.remote_addr} through the API!", severity=0, category=f"/Users/{username}")
         #reset unsuccesful login attempts if needed
         new_ad_data = dr.auto_disable_data
         #increase the number of wrong attempts
@@ -156,7 +156,7 @@ def login():
 def signout():
     token = data["token"]
     ret = handle_users.record_token(token.split("|")[0], token, 1)
-    CreateLog(text=f"{token.split("|")[1]} has logged out, through the API!", severity=0, category=f"/Users/{token.split("|")[1]}")
+    CreateLog(text=f"{token.split('|')[1]} has logged out, through the API!", severity=0, category=f"/Users/{token.split('|')[1]}")
     return ret
 
 @action("reload_plugins", 0, ["token"])

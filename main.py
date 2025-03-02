@@ -159,7 +159,8 @@ def signout():
     else:
         resp = make_response("Signed out successfully! Redirecting...")
         resp.set_cookie("token", "", max_age=0)
-    CreateLog(text=f"{token.split("|")[1]} has logged out!", severity=0, category=f"/Users/{token.split("|")[1]}")
+    
+    CreateLog(text=f"{token.split('|')[1]} has logged out!", severity=0, category=f"/Users/{token.split('|')[1]}")
     return resp, {"Refresh": "2; url=./login.html"}
 #handle css
 @app.route("/css/<path:p>")
@@ -226,7 +227,7 @@ def handle_login():
                 dr.refresh_tokens_data()
                 handle_users.record_token(CookieToken.split("|")[0], CookieToken, 1)
         resp.set_cookie(key="token", value=str(token), expires=int(dr.site_config_data["TokenExpire"]), max_age=int(dr.site_config_data["TokenExpire"]))
-        CreateLog(text=f"{token.split("|")[1]} has logged in from {request.remote_addr} !", severity=0, category=f"/Users/{token.split("|")[1]}")
+        CreateLog(text=f"{token.split('|')[1]} has logged in from {request.remote_addr} !", severity=0, category=f"/Users/{token.split('|')[1]}")
         #reset unsuccesful login attempts if needed
         new_ad_data = dr.auto_disable_data
         #increase the number of wrong attempts
@@ -256,7 +257,7 @@ def handle_login():
         if request.form["username"] not in names:
             MakeLog = 0
     if MakeLog:
-        CreateLog(text=f"Unsuccesful login attempt by `{request.form["username"]}` with password `{request.form["password"]}` from {request.remote_addr}!", severity=1, category=f"/Users/{request.form["username"]}")
+        CreateLog(text=f"Unsuccesful login attempt by `{request.form['username']}` with password `{request.form['password']}` from {request.remote_addr}!", severity=1, category=f"/Users/{request.form['username']}")
         new_ad_data = dr.auto_disable_data
         #increase the number of wrong attempts
         if request.form["username"] in new_ad_data.keys():
@@ -283,8 +284,8 @@ def handle_login():
             attempt_limit = 0
             CreateLog("AutoDisable must be a number", 2, "SystemLogs/Configs")
         if int(new_ad_data[request.form["username"]]) >= attempt_limit:
-            CreateLog(f"User `{request.form["username"]}` got disabled by Auto Disable system", 1, f"Users/{request.form["username"]}")
-            CreateLog(f"User `{request.form["username"]}` got disabled by Auto Disable system", 1, f"SystemLogs/AutoDisable")
+            CreateLog(f"User `{request.form['username']}` got disabled by Auto Disable system", 1, f"Users/{request.form['username']}")
+            CreateLog(f"User `{request.form['username']}` got disabled by Auto Disable system", 1, f"SystemLogs/AutoDisable")
             #disabling user
             role_id = 0
             for i in range(len(dr.roles_data)-1):
@@ -339,7 +340,7 @@ def AddUser():
             admin_name = request.cookies.get("token").split("|")[1]
         else:
             admin_name = "NOT_LOGGED_IN"
-        CreateLog(text=f"user `{request.form["username"]}` has been added by admin `{admin_name}`!", severity=0, category="SystemLogs/Users")
+        CreateLog(text=f"user `{request.form['username']}` has been added by admin `{admin_name}`!", severity=0, category="SystemLogs/Users")
 
     return serve_html_website("/admin/addUser.html").replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options).replace("RESPONSE", response).replace("FONTCOLOR", font_color).replace("BG_COLOR", bg_color)
 
