@@ -162,4 +162,11 @@ def signout():
 @action("reload_plugins", 0, ["token"])
 def reload_plugins():
     reload_plugins_func()
-    return "rleoad"
+    return "200 OK"
+
+@action("get_user", 0, ["token"])
+def get_user():
+    #if set to one, we'll filter for its value
+    testFor = {"ID":0, "name":0, "email":0, "full_name":0, "groups":0, "roles":0, "description":0, "IsLoggedIn":0, "API_access":0}
+    filtervalue = {"ID":None, "name":None, "email":None, "full_name":None, "groups":None, "roles":None, "description":None, "IsLoggedIn":None, "API_access":None}
+    

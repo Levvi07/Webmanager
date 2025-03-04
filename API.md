@@ -79,7 +79,7 @@
     - Roles
     - Description
     - IsLoggedIn
-
+    - API_access
 - the id(s) of roles/groups may be either given as an integer or an array of integers
 
 ```json
@@ -93,7 +93,8 @@
     "groups":[1,2,3],
     "roles":2,
     "description":"Is very admin",
-    "IsLoggedIn":1
+    "IsLoggedIn":1,
+    "API_access":1
 }  --> json
 ```
 
