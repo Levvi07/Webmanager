@@ -166,7 +166,22 @@ def reload_plugins():
 
 @action("get_user", 0, ["token"])
 def get_user():
-    #if set to one, we'll filter for its value
-    testFor = {"ID":0, "name":0, "email":0, "full_name":0, "groups":0, "roles":0, "description":0, "IsLoggedIn":0, "API_access":0}
+    #if set to other than None we filter for it
     filtervalue = {"ID":None, "name":None, "email":None, "full_name":None, "groups":None, "roles":None, "description":None, "IsLoggedIn":None, "API_access":None}
+    for k in filtervalue.keys():
+        if k in data:
+            filtervalue[k] = data[k]
+    print(filtervalue)
+
+    #Get all the required data sets
+    users = dr.users_data[1:]
+    user_perms = dr.user_perm_data
+    API_access = ""
+    print(users)
+    #combine data sets
+
+    #filter rows
+
+    #return
     
+    return "200 OK"

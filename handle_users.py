@@ -210,6 +210,7 @@ def AddUser(form) -> str:
     description = form["description"].strip()
     roles = form["roles_post"][:-1]
     groups = form["groups_post"][:-1]
+    API_access = form["API_select"].strip()
     #check if username exists already
     for i in range(len(dr.users_data)-1):
         if dr.users_data[i+1][1].lower() == username.lower():
@@ -244,9 +245,9 @@ def AddUser(form) -> str:
     ## PWD_HASHES.CSV END ##
 
     ## USER_PERMS.CSV BEGIN ##
-    #ID,RoleIds,GroupIds
+    #ID,RoleIds,GroupIds, API_level
     new_users_data = dr.user_perm_data
-    new_users_data.append([str(id), roles, groups])
+    new_users_data.append([str(id), roles, groups, API_access])
     f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
     writer = csv.writer(f)
     for row in new_users_data:
