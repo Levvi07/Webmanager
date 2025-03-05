@@ -42,10 +42,29 @@ p{
 
 #pwd_sub{
     width: 70%;
-    margin-top:70%;
+    margin-top:10%;
     margin-left:18%;
     background-color: rgb(51, 63, 239);
     color:white;
+}
+
+#API_select{
+    width:60%;
+    font-size:24px;
+    margin-left:28%;
+}
+
+#API_sub{
+    width: 80%;
+    margin-top:3%;
+    margin-left:20%;
+    background-color: rgb(51, 63, 239);
+    color:white;
+}
+
+#API_h2{
+    margin-top:150%;
+    margin-left:15%;
 }
 
 #groups_sub{
@@ -110,6 +129,12 @@ form{
 #GroupCH{
     width:14%;
     left:82.5%
+}
+
+#APICH{
+    width:16%;
+    left:44%;
+    border:none
 }
 
 select{

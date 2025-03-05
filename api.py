@@ -17,6 +17,7 @@
 from LLogger import *
 import handle_users
 import csv
+from datetime import datetime, timedelta
 
 #passed by main.py, used for reloading plugins
 reload_plugins_func = ""
@@ -63,10 +64,49 @@ def handle(req):
                 data[rk]
             except:
                 return "400 Bad Request; Not enough data, refer to documentation"
-        return actions[action]()
+        #we'll only need to return at the end, but we need to check for existence of action
+        pass
     else:
         return "400 Bad Request; No such action"
     
+    #verify token
+    if action != "login":
+        token = data["token"]
+        id = token.split("|")[0]
+        token_data = dr.tokens_data
+        print(id)
+        print(token)
+        row_id = -1
+        for i in range(len(token_data)-1):
+            print(str(token_data[i+1][0]))
+            print(str(id))
+            if str(token_data[i+1][0]) == str(id):
+                row_id = i+1
+        if row_id == -1:
+            return "401 Unauthorized; Token doesn't exist!"
+        print(token_data[row_id][1])
+        if token_data[row_id][1] != token:
+            return "401 Unauthorized; Token doesn't exist!"
+        print(datetime.strptime(token_data[row_id][2].split(".")[0], "%Y-%m-%d %H:%M:%S") - datetime.today())
+        if datetime.strptime(token_data[row_id][2].split(".")[0], "%Y-%m-%d %H:%M:%S") - datetime.today() < timedelta(seconds=0):
+            return "401 Unauthorized; Token expired!"
+
+    #verify r/w perms
+    rw_level = dr.user_perm_data[int(id)][3]
+    needed_level = IsWriteAction[action]
+    print("rw:", rw_level, "   Needed level:", needed_level)
+    try:
+        int(rw_level)
+    except:
+        #not a number
+        return "500 Server Error; R/w permission level is not a number"
+    if int(rw_level) >= int(needed_level):
+        pass
+    else:
+        return "401 Unauthorized; Insufficient permissions"
+    
+    #return action at the end
+    return actions[action]()
 @action("login", 0, ["username", "password"])
 def login():
     username = data["username"]
@@ -159,7 +199,7 @@ def signout():
     CreateLog(text=f"{token.split('|')[1]} has logged out, through the API!", severity=0, category=f"/Users/{token.split('|')[1]}")
     return ret
 
-@action("reload_plugins", 0, ["token"])
+@action("reload_plugins", 1, ["token"])
 def reload_plugins():
     reload_plugins_func()
     return "200 OK"

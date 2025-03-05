@@ -572,6 +572,15 @@ def admin_user_page(p):
             for row in new_user_perms:
                 writer.writerow(row)
             f.close()    
+        elif rtype == "API":
+            API_level = request.form["API_select"]
+            new_user_perms = dr.user_perm_data
+            new_user_perms[id][3] = API_level
+            f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_perms:
+                writer.writerow(row)
+            f.close()    
 
     try:
         username = dr.users_data[id][1]
@@ -582,11 +591,23 @@ def admin_user_page(p):
     description = dr.users_data[id][4]
     role_options = ""
     group_options = ""
+    API_options = "<option value='-1'>No Access</option>\n<option value='0'>Read</option>\n<option value='1'>Write</option>"
+    #determine API level
+    api_level = dr.user_perm_data[id][3]
+    if str(api_level) == "0":
+        API_options = API_options.replace(">Read", "selected>Read")
+    elif str(api_level) == "1":
+        API_options = API_options.replace(">Write", "selected>Write")
+    else:
+        API_options = API_options.replace(">No", "selected>No")
+
     for i in range(len(dr.roles_data)-1):
         role_options += f"<option value='{str(dr.roles_data[i+1][0])}'>{dr.roles_data[i+1][2]}</option>"
     for i in range(len(dr.groups_data)-1):
-        group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>" 
-    ret = serve_html_website("/admin/modifyUser.html").replace("#DESCRIPTION#", description).replace("#EMAIL#", email).replace("#USERNAME#", username).replace("#FULL_NAME#", full_name).replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options)
+        group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>"
+
+    
+    ret = serve_html_website("/admin/modifyUser.html").replace("#DESCRIPTION#", description).replace("#EMAIL#", email).replace("#USERNAME#", username).replace("#FULL_NAME#", full_name).replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options).replace("#API_ACCESS#", API_options)
     if alert != "":
         ret += "<script>alert('"+ alert +"')</script>"
     #get roles and groups of user, inject them trough js
@@ -1022,8 +1043,6 @@ def site_perms():
         #ENDPOINTS MUST START WITH /
         perms += f"<tr><td class='endpoint_td'>{endpoint}</td><td class='al_td'>{dr.site_perm_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modify_site_perm/{endpoint[1:]}'>Modify</a></td><td class='del_td'><button onclick=\"location.href=\'/admin/delete_site_perm/{endpoint[1:]}\'\">Delete Rule</button></td></tr>"
     return serve_html_website("/admin/site_perms.html").replace("PERMS", perms)
-
-## HERE WE ARE WITH THE LOGS ##
 
 #delete site perm rule
 @app.route("/admin/delete_site_perm/<path:p>")
