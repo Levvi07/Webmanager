@@ -7,6 +7,7 @@
 ## Actions
 
 ### Login
+##### Permission Level: Read (0)
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | username | A username for a regular user | admin | x |
@@ -24,6 +25,8 @@
 ```
 
 ### Sign out
+##### Permission Level: Read (0)
+
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
@@ -40,7 +43,7 @@
 
 
 ### Reload Plugins
-
+##### Permission Level: Write (1)
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
@@ -56,6 +59,8 @@
 ```
 
 ### Get User Data
+##### Permission Level: Read (0)
+
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
@@ -80,7 +85,7 @@
     - Description
     - IsLoggedIn
     - API_access
-- the id(s) of roles/groups may be either given as an integer or an array of integers
+- Its only possible to search for 1 group and 1 role at a time
 
 ```json
 {  
@@ -90,7 +95,7 @@
     "name":"admin",
     "email":"admin@example.com",
     "full_name":"Admin Adminton",
-    "groups":[1,2,3],
+    "groups":1,
     "roles":2,
     "description":"Is very admin",
     "IsLoggedIn":1,
@@ -99,6 +104,7 @@
 ```
 
 ### Add User
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -129,6 +135,7 @@
 ```
 
 ### Remove User
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -144,6 +151,7 @@
 ```
 
 ### Modify User
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -176,6 +184,7 @@
 ```
 
 ### Get Role data
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -202,6 +211,7 @@
 ```
 
 ### Add Role
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -224,6 +234,7 @@
 ```
 
 ### Remove Role
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -239,6 +250,7 @@
 ```
 
 ### Modify Role
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -262,6 +274,7 @@
 ```
 
 ### Get Group data
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -288,6 +301,7 @@
 ```
 
 ### Add Group
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -310,6 +324,7 @@
 ```
 
 ### Remove Group
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -325,6 +340,7 @@
 ```
 
 ### Modify Group
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -348,6 +364,7 @@
 ```
 
 ### Get site access rule data
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -374,6 +391,7 @@
 ```
 
 ### Create a site access rule
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -401,6 +419,7 @@
 ```
 
 ### Remove a site access rule
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -416,6 +435,7 @@
 ```
 
 ### Modify a site permission rule
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -445,6 +465,7 @@
 ```
 
 ### Get config
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -481,6 +502,7 @@
 ```
 
 ### Delete config
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -496,6 +518,7 @@
 ```
 
 ### Change config
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -513,6 +536,7 @@
 ```
 
 ### Get pluginlist
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -528,6 +552,7 @@
 ```
 
 ### Get plugin data
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -546,6 +571,7 @@
 ```
 
 ### Change plugin status
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -568,6 +594,7 @@
 ```
 
 ### Add plugin config
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -587,6 +614,7 @@
 ```
 
 ### Change plugin config
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -606,6 +634,7 @@
 ```
 
 ### Remove plugin config
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |

@@ -74,20 +74,14 @@ def handle(req):
         token = data["token"]
         id = token.split("|")[0]
         token_data = dr.tokens_data
-        print(id)
-        print(token)
         row_id = -1
         for i in range(len(token_data)-1):
-            print(str(token_data[i+1][0]))
-            print(str(id))
             if str(token_data[i+1][0]) == str(id):
                 row_id = i+1
         if row_id == -1:
             return "401 Unauthorized; Token doesn't exist!"
-        print(token_data[row_id][1])
         if token_data[row_id][1] != token:
             return "401 Unauthorized; Token doesn't exist!"
-        print(datetime.strptime(token_data[row_id][2].split(".")[0], "%Y-%m-%d %H:%M:%S") - datetime.today())
         if datetime.strptime(token_data[row_id][2].split(".")[0], "%Y-%m-%d %H:%M:%S") - datetime.today() < timedelta(seconds=0):
             return "401 Unauthorized; Token expired!"
 
@@ -216,12 +210,50 @@ def get_user():
     #Get all the required data sets
     users = dr.users_data[1:]
     user_perms = dr.user_perm_data
-    API_access = ""
-    print(users)
     #combine data sets
-
+    users_combined = []
+    for i in range(len(users)-1):
+        #determine whether user is logged in or not
+        token = data["token"]
+        id = token.split("|")[0]
+        token_data = dr.tokens_data
+        row_id = -1
+        isloggedin = -1
+        for i in range(len(token_data)-1):
+            if str(token_data[i+1][0]) == str(id):
+                row_id = i+1
+        if datetime.strptime(token_data[row_id][2].split(".")[0], "%Y-%m-%d %H:%M:%S") - datetime.today() < timedelta(seconds=0):
+            isloggedin = 0
+        if datetime.strptime(token_data[row_id][2].split(".")[0], "%Y-%m-%d %H:%M:%S") - datetime.today() < timedelta(seconds=0):
+            isloggedin = 1
+            
+        users_combined.append({
+            "ID":users[int(id)][0], 
+            "name":users[int(id)][1], 
+            "email":users[int(id)][2], 
+            "full_name":users[int(id)][3], 
+            "groups":user_perms[int(id)][2], 
+            "roles":user_perms[int(id)][1], 
+            "description":users[int(id)][4], 
+            "IsLoggedIn":isloggedin, 
+            "API_access":user_perms[int(id)][3]
+            })
+    print(users_combined)
+    ret_value = []
     #filter rows
-
+    for user in users_combined:
+        for k in filtervalue:
+            if filtervalue[k] != None:
+                if k == "groups" or k == "roles":
+                    # ";" + user[k] + ";" is necessary because, we need to check that there's a ; before and after the number
+                    # to ensure we only search for that exact number. ==> 33 and 3 would both trigger for a 3 BUT
+                    # in "12;5;65;4" we can search for ";5;" so only the correct one triggers.
+                    # adding the extra ; at the beginning and end of user[k] is necessary so those trigger correctly too
+                    if ";" + filtervalue[k] + ";" not in ";" + user[k] + ";":
+                        continue
+                else:
+                    if user[k] != filtervalue[k]:
+                        continue
     #return
     
     return "200 OK"
