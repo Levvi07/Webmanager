@@ -113,25 +113,24 @@
 | Email | The email of the searched user | admin@example.com | x |
 | Full name | The full name of the searched user | Admin Adminton | x |
 | Password | A password | 1 | x |
-| Groups | A group id (only one id at a time) | 1 |  |
-| Roles | A role id (only one id at a time) | 1 |  |
+| Groups | An array of group ids | 1 |  |
+| Roles | An array of role ids | 1 |  |
 | Description | A string of description  (snippets dont work, full text is needed)| Description |  |
-| API_access | 1 or 0; Whether the user has access to the API | 1 | x |
+| API_access | 1 or 0; Whether the user has access to the API | 1 |  |
 
 ```json
 {  
     "action": "add_user",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
-    "ID":"1",
     "name":"admin",
     "email":"admin@example.com",
     "full_name":"Admin Adminton",
     "password":"PASSWORD123",
     "groups":[1,2,3],
-    "roles":2,
+    "roles":[2],
     "description":"Is very admin",
     "API_access":1
-}  --> json
+}  --> str
 ```
 
 ### Remove User
