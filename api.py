@@ -88,7 +88,6 @@ def handle(req):
         #verify r/w perms
         rw_level = dr.user_perm_data[int(id)][3]
         needed_level = IsWriteAction[action]
-        print("rw:", rw_level, "   Needed level:", needed_level)
         try:
             int(rw_level)
         except:
@@ -265,7 +264,6 @@ def get_user():
 
 @action("add_user", 1, ["token", "name", "email", "full_name", "password"])
 def add_user():
-    token = data["token"]
     name = data["name"]
     email = data["email"]
     full_name = data["full_name"]
@@ -294,5 +292,448 @@ def add_user():
             return "400 Bad Request; Groups MUST be an array"
     except:
         roles = []
+
+    roles_data = dr.roles_data[1:]
+    groups_data = dr.groups_data[1:]
+    for i in range(len(roles)):
+        #checking if role exists
+        if roles[i] > len(roles_data):
+            return "400 Bad Request; non-existent role:" + str(roles[i])
+        roles[i] = str(roles[i])
+    for i in range(len(groups)):
+        #checking if group exists
+        if groups[i] > len(groups_data):
+            return "400 Bad Request; non-existent group:" + str(groups[i])
+        groups[i] = str(groups[i])
+
+    roles = ";".join(roles) + ";"
+    groups = ";".join(groups) + ";"
+    #passing it in the same structure a form is, because thats how I made the function
+    # We also need to use the same names as the page. Also password1 and 2 are just the same here
+    form = {"fullname":full_name, "username":name, "password1":password, "password2":password, "email":email, "description":description, "roles_post":roles, "groups_post":groups, "API_select":str(API_access)}
+    _,_,msg = handle_users.AddUser(form)
+    if msg != "User added succesfully":
+        return "400 Bad Request;" + msg
+    else:
+        return "200 OK;" + msg
+    
+@action("remove_user", 1, ["token", "ID"])
+def remove_user():
+    ID = data["ID"]
+    #check that user exists
+    if int(ID) > len(dr.users_data[1:]):
+        return "400 Bad Request; Non-existent user"
+    handle_users.remove_user(int(ID))
+    return "200 OK; User removed"
+
+@action("modify_user", 1, ["token", "ID"])
+def modify_user():
+    ID = data["ID"]
+    #check that user exists
+    if int(ID) > len(dr.users_data[1:]):
+        return "400 Bad Request; Non-existent user"
+    
+    #filtering set values
+    filtervalue = {"name":None, "email":None, "full_name":None, "description":None, "groups":None, "roles":None, "API_access":None}
+    
+
+    for v in filtervalue:
+        if v in data:
+            filtervalue[v] = data[v]
+
+    if filtervalue["groups"] != None:
+        if type(filtervalue["groups"]) != list:
+            return "400 Bad Request; Groups MUST be an array"
+        
+        groups_data = dr.groups_data[1:]
+        for i in range(len(filtervalue["groups"])):
+            #checking if group exists
+            if filtervalue["groups"][i] > len(groups_data):
+                return "400 Bad Request; non-existent group:" + str(filtervalue["groups"][i])
+            filtervalue["groups"][i] = str(filtervalue["groups"][i])
+        
+        filtervalue["groups"] = ";".join(filtervalue["groups"])
+    
+    if filtervalue["roles"] != None:
+        if type(filtervalue["roles"]) != list:
+            return "400 Bad Request; Roles MUST be an array"
+        
+        roles_data = dr.roles_data[1:]
+        for i in range(len(filtervalue["roles"])):
+            #checking if role exists
+            if filtervalue["roles"][i] > len(roles_data):
+                return "400 Bad Request; non-existent role:" + str(filtervalue["roles"][i])
+            filtervalue["roles"][i] = str(filtervalue["roles"][i])
+
+        filtervalue["roles"] = ";".join(filtervalue["roles"])
+    
+    #make sure name isnt used already
+    if filtervalue["name"] != None:
+        usernames = []
+        for i in range(len(dr.users_data)-1):
+            usernames.append(dr.users_data[i+1][1])
+        
+        if filtervalue["name"] in usernames:
+            return "409 Conflict; Username already in use"
+
+    user_ids = {"name":1, "email":2, "full_name":3, "description":4}
+    perm_ids = {"groups":2, "roles":1, "API_access":3}
+
+    new_users_data = dr.users_data
+    new_users_perm_data = dr.user_perm_data
+    
+    #actually saving those values
+    #first users.csv
+    for k in user_ids:
+        if filtervalue[k] != None:
+            new_users_data[int(ID)][user_ids[k]] = filtervalue[k]
+    
+    #then user_perms.csv
+    for k in perm_ids:
+        if filtervalue[k] != None:
+            new_users_perm_data[int(ID)][perm_ids[k]] = filtervalue[k]
+
+    #writing data
+
+    f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_users_data:
+        writer.writerow(row)
+    f.close()  
+
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_users_perm_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK; User modified"
+
+@action("get_role", 0, ["token"])
+def get_role_data():
+    #if set to other than None we filter for it
+    filtervalue = {"ID":None, "name":None, "perm_level":None, "description":None}
+    for k in filtervalue.keys():
+        if k in data:
+            filtervalue[k] = str(data[k])
+
+    #Get all the required data sets
+    roles = dr.roles_data
+    ret_value = []
+    
+    #sanitising perm_level
+    if filtervalue["perm_level"] != None:
+                perm_level = filtervalue["perm_level"]
+                pm = ""
+                if perm_level[-1] == "-" or perm_level[-1] == "+":
+                    pm = perm_level[-1]
+                    perm_level = perm_level[:-1]
+                
+                #make sure its ok
+                try:
+                    int(perm_level)
+                except:
+                    return "400 Bad Request; perm_level must be a number, or a number followed either by a + or a - sign (Refer to documentation)"
+
+    #filter rows
+
+    for i in range(len(roles)-1):
+            #testing for definite values
+            if filtervalue["description"] != None:
+                if roles[i+1][3] != filtervalue["description"]:
+                    continue
+
+            if filtervalue["name"] != None:
+                if roles[i+1][2] != filtervalue["name"]:
+                    continue
+            
+            if filtervalue["ID"] != None:
+                if str(roles[i+1][0]) != str(filtervalue["ID"]):
+                    continue
+                
+            # here we need some weird negation cause of the way filtering works
+            # pm = ""  ==>   int(roles[i+1][1]) != int(perm_level)
+            # pm = "+"  ==>   int(roles[i+1][1]) < int(perm_level)
+            # pm = "-"  ==>   int(roles[i+1][1]) > int(perm_level) 
+            if filtervalue["perm_level"] != None:
+                if pm == "":
+                    if int(roles[i+1][1]) != int(perm_level):
+                        continue
+                elif pm == "-":
+                    if int(roles[i+1][1]) > int(perm_level):
+                        continue
+                elif pm == "+":
+                    if int(roles[i+1][1]) < int(perm_level):
+                        continue
+        
+            return_json = {
+                "ID":str(roles[i+1][0]),
+                "perm_level":str(roles[i+1][1]),
+                "name":roles[i+1][2],
+                "description":roles[i+1][3]
+            }
+            ret_value.append(return_json)
+
+    #return
+    return ret_value
+
+
+@action("add_role", 1, ["token", "name"])
+def add_role():
+    #check that name doesnt exist already
+    name = data["name"]
+    for i in range(len(dr.roles_data)-1):
+        if dr.roles_data[i+1][2].lower() == name.lower():
+            return "400 Bad Request; Role already exists"
+        
+    if "perm_level" in data:
+        perm_level = data["perm_level"]
+        try:
+            perm_level = int(perm_level)
+        except:
+            return "400 Bad Request; perm_level must be an integer"
+    else: perm_level = -1
+
+    if "description" in data:
+        description = data["description"]
+    else: description = ""
+
+    new_roles_data = dr.roles_data
+    new_roles_data.append([int(new_roles_data[-1][0])+1, perm_level, name, description])
+
+    #writing data
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_roles_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK"
+
+
+@action("remove_role", 1, ["token", "ID"])
+def remove_role():
+    ID = data["ID"]
+    try:
+        ID = int(ID)
+    except:
+        return "400 Bad Request; ID must be an integer"
+    
+    new_roles_data = dr.roles_data
+    if ID > len(new_roles_data)-1:
+        return "400 Bad Request; Role does not exist"
+    new_roles_data.pop(ID)
+
+    #reorganising IDs
+    for i in range(len(new_roles_data)-ID):
+        new_roles_data[i+ID][0] = ID+i
+        
+
+    #writing data
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_roles_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK"
+
+@action("modify_role", 1, ["token", "ID"])
+def modify_role():
+    ID = data["ID"]
+    try:
+        ID = int(ID)
+    except:
+        return "400 Bad Request; ID must be an integer"
+    
+    new_roles_data = dr.roles_data
+    if ID > len(new_roles_data)-1:
+        return "400 Bad Request; Role does not exist"
+    
+    if "name" in data:
+        new_roles_data[ID][2] = data["name"]
+    
+    if "description" in data:
+        new_roles_data[ID][3] = data["description"]
+
+    if "perm_level" in data:
+        try:
+            int(data["perm_level"])
+        except:
+            return "400 Bad Request; perm_level must be an integer"
+        
+        new_roles_data[ID][1] = int(data["perm_level"])
+
+    #writing data
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_roles_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK"
+
+
+@action("get_group", 0, ["token"])
+def get_group_data():
+    #if set to other than None we filter for it
+    filtervalue = {"ID":None, "name":None, "perm_level":None, "description":None}
+    for k in filtervalue.keys():
+        if k in data:
+            filtervalue[k] = str(data[k])
+
+    #Get all the required data sets
+    groups = dr.groups_data
+    ret_value = []
+    
+    #sanitising perm_level
+    if filtervalue["perm_level"] != None:
+                perm_level = filtervalue["perm_level"]
+                pm = ""
+                if perm_level[-1] == "-" or perm_level[-1] == "+":
+                    pm = perm_level[-1]
+                    perm_level = perm_level[:-1]
+                
+                #make sure its ok
+                try:
+                    int(perm_level)
+                except:
+                    return "400 Bad Request; perm_level must be a number, or a number followed either by a + or a - sign (Refer to documentation)"
+
+    #filter rows
+    for i in range(len(groups)-1):
+            #testing for definite values
+            if filtervalue["description"] != None:
+                if groups[i+1][3] != filtervalue["description"]:
+                    continue
+
+            if filtervalue["name"] != None:
+                if groups[i+1][2] != filtervalue["name"]:
+                    continue
+            
+            if filtervalue["ID"] != None:
+                if str(groups[i+1][0]) != str(filtervalue["ID"]):
+                    continue
+                
+            # here we need some weird negation cause of the way filtering works
+            # pm = ""  ==>   int(roles[i+1][1]) != int(perm_level)
+            # pm = "+"  ==>   int(roles[i+1][1]) < int(perm_level)
+            # pm = "-"  ==>   int(roles[i+1][1]) > int(perm_level) 
+            if filtervalue["perm_level"] != None:
+                if pm == "":
+                    if int(groups[i+1][1]) != int(perm_level):
+                        continue
+                elif pm == "-":
+                    if int(groups[i+1][1]) > int(perm_level):
+                        continue
+                elif pm == "+":
+                    if int(groups[i+1][1]) < int(perm_level):
+                        continue
+        
+            return_json = {
+                "ID":str(groups[i+1][0]),
+                "perm_level":str(groups[i+1][1]),
+                "name":groups[i+1][2],
+                "description":groups[i+1][3]
+            }
+            ret_value.append(return_json)
+
+    #return
+    return ret_value
+
+
+@action("add_group", 1, ["token", "name"])
+def add_group():
+    #check that name doesnt exist already
+    name = data["name"]
+    for i in range(len(dr.groups_data)-1):
+        if dr.groups_data[i+1][2].lower() == name.lower():
+            return "400 Bad Request; Group already exists"
+        
+    if "perm_level" in data:
+        perm_level = data["perm_level"]
+        try:
+            perm_level = int(perm_level)
+        except:
+            return "400 Bad Request; perm_level must be an integer"
+    else: perm_level = -1
+
+    if "description" in data:
+        description = data["description"]
+    else: description = ""
+
+    new_groups_data = dr.groups_data
+    new_groups_data.append([int(new_groups_data[-1][0])+1, perm_level, name, description])
+
+    #writing data
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_groups_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK"
+
+
+@action("remove_group", 1, ["token", "ID"])
+def remove_group():
+    ID = data["ID"]
+    try:
+        ID = int(ID)
+    except:
+        return "400 Bad Request; ID must be an integer"
+    
+    new_groups_data = dr.groups_data
+    if ID > len(new_groups_data)-1:
+        return "400 Bad Request; Group does not exist"
+    new_groups_data.pop(ID)
+
+    #reorganising IDs
+    for i in range(len(new_groups_data)-ID):
+        new_groups_data[i+ID][0] = ID+i
+        
+
+    #writing data
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_groups_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK"
+
+
+@action("modify_group", 1, ["token", "ID"])
+def modify_group():
+    ID = data["ID"]
+    try:
+        ID = int(ID)
+    except:
+        return "400 Bad Request; ID must be an integer"
+    
+    new_groups_data = dr.groups_data
+    if ID > len(new_groups_data)-1:
+        return "400 Bad Request; Group does not exist"
+    
+    if "name" in data:
+        new_groups_data[ID][2] = data["name"]
+    
+    if "description" in data:
+        new_groups_data[ID][3] = data["description"]
+
+    if "perm_level" in data:
+        try:
+            int(data["perm_level"])
+        except:
+            return "400 Bad Request; perm_level must be an integer"
+        
+        new_groups_data[ID][1] = int(data["perm_level"])
+
+    #writing data
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_groups_data:
+        writer.writerow(row)
+    f.close()
 
     return "200 OK"

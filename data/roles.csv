@@ -1,4 +1,4 @@
 Role ID,Role Permission Level,Role Name,Role Description
-1,12,Admins,Admin Role
+1,20,Admins,Admin Role
 2,1,Users,Basic User role
-3,-1,Disabled,Very Very Disabled :((
+3,-1,Disabled,For disabling users

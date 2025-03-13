@@ -159,8 +159,8 @@
 | Name | The name of the searched user | admin |  |
 | Email | The email of the searched user | admin@example.com |  |
 | Full name | The full name of the searched user | Admin Adminton |  |
-| Groups | A group id (only one id at a time) | 1 |  |
-| Roles | A role id (only one id at a time) | 1 |  |
+| Groups | An array of group ids | 1 |  |
+| Roles | An array of role ids | 1 |  |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
 | API_access | 1 or 0; Whether the user has access to the API | 1 |  |
 
@@ -176,7 +176,7 @@
     "email":"admin@example.com",
     "full_name":"Admin Adminton",
     "groups":[1,2,3],
-    "roles":2,
+    "roles":[2],
     "description":"Is very admin",
     "API_access":1
 }  --> str
@@ -215,9 +215,9 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| Name | The name of the searched role | admin | x |
-| Perm_level | The perm level of the role | 5 |  |
-| Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
+| Name | The name of the new role | admin | x |
+| Perm_level | The perm level of the new role | 5 |  |
+| Description | A string of description |  |
 
 - When Perm_level is not set it defaults to -1
 
@@ -225,7 +225,6 @@
 {  
     "action": "add_role",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
-    "ID":1,
     "name":"admin",
     "perm_level":2,
     "description":"Admin role"
@@ -315,7 +314,6 @@
 {  
     "action": "add_group",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
-    "ID":1,
     "name":"admin",
     "perm_level":2,
     "description":"Admin group"
