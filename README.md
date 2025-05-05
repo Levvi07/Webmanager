@@ -1,7 +1,7 @@
 # This is a website hosting my custom server control software
 ## Made for python 3.11
 ## Rules for changing Site Permissions:
-### Set permission level
+### Set access_level
 
 - -1 = no one may access
 - 0 = only accessible by certain users and groups

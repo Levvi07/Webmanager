@@ -16,7 +16,7 @@
 # all other data -- only in the correct function, the api will return an HTTP code for insufficient data when enough data isnt given
 from LLogger import *
 import handle_users
-import csv
+import csv, json
 from datetime import datetime, timedelta
 
 #passed by main.py, used for reloading plugins
@@ -735,5 +735,287 @@ def modify_group():
     for row in new_groups_data:
         writer.writerow(row)
     f.close()
+    return "200 OK"
 
+
+@action("get_access_rule", 0, ["token", "endpoint"])
+def get_access_rule():
+    r_arr = {}
+    for r in dr.site_perm_data:
+        if r[0] == data["endpoint"]:
+            r_arr = {
+                "endpoint":r[0],
+                "access_level":r[1],
+                "access_roles_id":r[2],
+                "access_groups_id":r[3],
+                "access_users_id":r[4],
+                "perm_level":r[5]
+            }
+
+    if r_arr == {}:
+        return "400 Bad Request; No such endpoint"
+    else:
+        return r_arr
+    
+
+@action("create_access_rule", 1, ["token", "endpoint", "access_level", "perm_level"])
+def create_access_rule():
+    r_arr = dr.site_perm_data
+    new_rule = []
+    # append data one at a time, after validating data
+    # endpoint,access_level,access_roles_id,access_groups_id,access_users_id,perm_level
+    if data["endpoint"] == "":
+        return "400 Bad Request; Endpoint must not be empty!"
+    if data["endpoint"][0] != "/":
+        return "400 Bad Request; Endpoint must start with /"
+    DoesExist = 0
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] == data["endpoint"]:
+            DoesExist = 1
+    if DoesExist:
+        return "400 Bad Request; A rule for this endpoint is already in place!" 
+    
+    new_rule.append(data["endpoint"])
+
+    try:
+        data["access_level"] = int(data["access_level"])
+        new_rule.append(data["access_level"])
+    except:
+        return "400 Bad Request; access_level must be an integer"
+
+    if "access_roles_id" in data:
+        if type(data["access_roles_id"]) != list:
+            return "400 Bad Request; access_roles_id must be a list"
+        else:
+            for i in range(len(data["access_roles_id"])):
+                data["access_roles_id"][i] = str(data["access_roles_id"][i])
+            new_rule.append(";".join(data["access_roles_id"]))
+    else:
+        new_rule.append("")
+
+    if "access_groups_id" in data:
+        if type(data["access_groups_id"]) != list:
+            return "400 Bad Request; access_groups_id must be a list"
+        else:
+            for i in range(len(data["access_groups_id"])):
+                data["access_groups_id"][i] = str(data["access_groups_id"][i])
+            new_rule.append(";".join(data["access_groups_id"]))
+    else:
+        new_rule.append("")
+
+    if "access_users_id" in data:
+        if type(data["access_users_id"]) != list:
+            return "400 Bad Request; access_users_id must be a list"
+        else:
+            for i in range(len(data["access_users_id"])):
+                data["access_users_id"][i] = str(data["access_users_id"][i])
+            new_rule.append(";".join(data["access_users_id"]))
+    else:
+        new_rule.append("")
+
+    try:
+        data["perm_level"] = int(data["perm_level"])
+        new_rule.append(data["perm_level"])
+    except:
+        return "400 Bad Request; perm_level must be an integer"
+    
+    r_arr.append(new_rule)
+    #writing data
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in r_arr:
+        writer.writerow(row)
+    f.close()
+    return "200 OK"
+
+
+@action("remove_access_rule", 1, ["token", "endpoint"])
+def remove_access_rule():
+    r_arr = []
+    for r in dr.site_perm_data:
+        if r[0] != data["endpoint"]:
+            r_arr.append(r)
+    
+    if r_arr == dr.site_perm_data:
+        return "400 Bad Request; No such endpoint"
+    else:
+        #writing data
+        f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in r_arr:
+            writer.writerow(row)
+        f.close()
+        return "200 OK"
+    
+
+@action("modify_access_rule", 1, ["token", "endpoint"])
+def modify_access_rule():
+    r_arr = dr.site_perm_data
+    modified_rule = []
+    # append data one at a time, after validating data
+    # endpoint,access_level,access_roles_id,access_groups_id,access_users_id,perm_level
+    DoesExist = 0
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] == data["endpoint"]:
+            DoesExist = 1
+    if not DoesExist:
+        return "400 Bad Request; A rule for this endpoint does not exist!" 
+    
+    for r in r_arr:
+        if r[0] == data["endpoint"]:
+            modified_rule = r
+
+    if "access_level" in data:
+        try:
+            data["access_level"] = int(data["access_level"])
+            modified_rule[1] = data["access_level"]
+        except:
+            return "400 Bad Request; access_level must be an integer"
+
+    if "access_roles_id" in data:
+        if type(data["access_roles_id"]) != list:
+            return "400 Bad Request; access_roles_id must be a list"
+        else:
+            for i in range(len(data["access_roles_id"])):
+                data["access_roles_id"][i] = str(data["access_roles_id"][i])
+            modified_rule[2] = ";".join(data["access_roles_id"])
+
+    if "access_groups_id" in data:
+        if type(data["access_groups_id"]) != list:
+            return "400 Bad Request; access_groups_id must be a list"
+        else:
+            for i in range(len(data["access_groups_id"])):
+                data["access_groups_id"][i] = str(data["access_groups_id"][i])
+            modified_rule[3] = ";".join(data["access_groups_id"])
+
+    if "access_users_id" in data:
+        if type(data["access_users_id"]) != list:
+            return "400 Bad Request; access_users_id must be a list"
+        else:
+            for i in range(len(data["access_users_id"])):
+                data["access_users_id"][i] = str(data["access_users_id"][i])
+            modified_rule[4] = ";".join(data["access_users_id"])
+
+    if "perm_level" in data:
+        try:
+            data["perm_level"] = int(data["perm_level"])
+            modified_rule[5] = data["perm_level"]
+        except:
+            return "400 Bad Request; perm_level must be an integer"
+    
+    for i in range(len(r_arr)):
+        if r_arr[i][0] == data["endpoint"]:
+            r_arr[i] = modified_rule
+
+    #writing data
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in r_arr:
+        writer.writerow(row)
+    f.close()
+    return "200 OK"
+
+
+@action("get_config", 0, ["token"])
+def get_config():
+    config_file = open("./data/site_configs.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+    if "config" not in data:
+        return config_data
+    else:
+        r_obj = {}
+        if type(data["config"]) != list:
+            return "400 Bad Request; config must be a list"
+        
+        for k in data["config"]:
+            try:
+                r_obj[k] = config_data[k]
+            except:
+                return "400 Bad Request; config contains a config name that doesn't exist"
+        
+        return r_obj
+
+
+@action("get_active_config", 0, ["token"])
+def get_active_config():
+    if "config" not in data:
+        return dr.site_config_data
+    else:
+        r_obj = {}
+        if type(data["config"]) != list:
+            return "400 Bad Request; config must be a list"
+        
+        for k in data["config"]:
+            try:
+                r_obj[k] = dr.site_config_data[k]
+            except:
+                return "400 Bad Request; config contains a config name that doesn't exist"
+        
+        return r_obj
+    
+
+
+@action("add_config", 1, ["token", "key", "value"])
+def add_config():
+    k = data["key"]
+    v = data["value"]
+
+    if " " in k:
+        return "400 Bad Request; Key must not contain spaces!"
+    
+    config_file = open("./data/site_configs.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+
+    if k in config_data.keys():
+        return "400 Bad Request; Key already exists!"
+
+    config_data[k] = v
+
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(config_data)
+    keys = list(config_data)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{config_data[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "200 OK"
+
+@action("remove_config", 1, ["token", "key"])
+def remove_config():
+    config_file = open("./data/site_configs.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+
+    if data["key"] not in config_data.keys():
+        return "400 Bad Request; Key doesn't exist!"
+    
+    new_config_data = {}
+    for k in config_data.keys():
+        if k != data["key"]:
+            new_config_data[k] = config_data[k]
+
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(new_config_data)
+    keys = list(new_config_data)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{new_config_data[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
     return "200 OK"

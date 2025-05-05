@@ -1,4 +1,5 @@
-endpoint,AccesLevel,access_roles_id,access_groups_id,access_users_id,perm_level
-/admin/*,1,1,1,,6
+endpoint,access_level,access_roles_id,access_groups_id,access_users_id,perm_level
+/admin/*,1,1,1,,8
 /user/*,0,,,-1,69
 /test_site.html,-1,,,,1
+/smth1/*,12,1;2;6;4,1;2;3;4;5,1;2;4;3,1817

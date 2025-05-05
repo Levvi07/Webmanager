@@ -394,23 +394,23 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | endpoint | The endpoint | /admin/* | x |
-| AccessLevel | A number that sets the permission level one must have to access this endpoint | /admin/* | x |
-| access_roles_id | A group of roleids that may be granted access (role1;role2;role3) | /admin/* |  |
-| access_groups_id | A group of groupids that may be granted access | group1;group2;group3 |  |
-| access_users_id | A group of user ids that may be granted access | user1;user2;user3 |  |
-| perm_level | sets the access mode of  the endpoint (see docs) | 1 | x |
+| access_level | sets the access mode of  the endpoint (see readme) | 0 | x |
+| access_roles_id | A group of role ids that may be granted access (role1;role2;role3) | [1,2,3] |  |
+| access_groups_id | A group of group ids that may be granted access | [1,2,3] |  |
+| access_users_id | A group of user ids that may be granted access | [1,2,3] |  |
+| perm_level | A number that sets the permission level one must have to access this endpoint | 1 | x |
 
-- access_role/groups/users_id must be either a single integer or an arary of them
+- access_roles/groups/users_id must be either an array of integers
 
 ```json
 {  
-    "action": "add_access_rule",  
+    "action": "create_access_rule",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "endpoint":"/admin/*",
-    "AccessLevel":0,
+    "access_level":0,
     "access_roles_id":[1,2,3],
-    "access_groups_id":1,
-    "access_users_id":-1,
+    "access_groups_id":[1],
+    "access_users_id":[-1],
     "perm_level":2
 }  --> str
 ```
@@ -438,7 +438,7 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | endpoint | The endpoint | /admin/* | x |
-| AccessLevel | A number that sets the permission level one must have to access this endpoint | /admin/* |  |
+| access_level | A number that sets the permission level one must have to access this endpoint | /admin/* |  |
 | access_roles_id | A group of roleids that may be granted access (role1;role2;role3) | /admin/* |  |
 | access_groups_id | A group of groupids that may be granted access | group1;group2;group3 |  |
 | access_users_id | A group of user ids that may be granted access | user1;user2;user3 |  |
@@ -450,15 +450,15 @@
 
 ```json
 {  
-    "action": "add_access_rule",  
-    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
-    "endpoint":"/admin/*",
-    "AccessLevel":0,
-    "access_roles_id":[1,2,3],
-    "access_groups_id":1,
-    "access_users_id":-1,
-    "perm_level":2
-}  --> str
+    "action": "modify_access_rule",  
+    "token":"3|Levi23|158e020aef6ed927d6a127a6be69df",
+    "endpoint":"/smth1/*",
+    "perm_level":187,
+    "access_groups_id":[1,2,3,4],
+    "access_users_id":[1,2,4,3],
+    "access_roles_id":[1,2,6,4],
+    "access_level":1
+} --> str
 ```
 
 ### Get config
@@ -469,9 +469,9 @@
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | config | Get the value of one or more specific configs | TokenExpire;UserDisabledSite |  |
 
-- In order to retrieve multiple pieces of config use an array, in that case the api will return a json object
-- One may also just pass 1 argument for it as a string
 - If no argument is passed to it, the API will return all the configs
+- In order to get specific configs, pass them as an array
+- Gets its data from the "site_configs.json" file, showing all configs as they are in the file (for active configs see "get_active_config")
 
 ```json
 {  
@@ -482,6 +482,7 @@
 ```
 
 ### Add config
+##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -531,6 +532,27 @@
     "value":"this is the modified value"
 }  --> str
 ```
+
+### Get Active Config
+##### Permission Level: Write (1)
+
+| Name | Description | Example | Required |
+| ---- | ----------- | ------- | :------: |
+| token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
+| config | Get the value of one or more specific configs | TokenExpire;UserDisabledSite |  |
+
+- If no argument is passed to it, the API will return all the configs
+- In order to get specific configs, pass them as an array
+- Gets its data from the system memory, showing all configs currently used by the system (for the configs of the mainframe see "get_config")
+
+```json
+{  
+    "action": "get_active_config",  
+    "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
+    "config":["AutoDisable", "LoggingEnabled"]
+}  --> json
+```
+
 
 ### Get pluginlist
 ##### Permission Level: Read (0)
