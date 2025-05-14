@@ -1,0 +1,105 @@
+00:00:26 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:00:26 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:00:26 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:00:26 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:00:26 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:00:26 [WARNING] global plugin configs for Newpluginlol dont exist
+00:02:53 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:02:53 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:02:53 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:02:53 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:02:53 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:02:53 [WARNING] global plugin configs for Newpluginlol dont exist
+00:03:48 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:03:48 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:03:48 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:03:48 [ERROR] Miscellanous error:invalid literal for int() with base 10: 'False'
+00:03:48 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:03:48 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:03:48 [WARNING] global plugin configs for Newpluginlol dont exist
+00:04:16 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:04:16 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:04:16 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:04:16 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:04:16 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:04:16 [WARNING] global plugin configs for Newpluginlol dont exist
+00:05:27 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:05:27 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:05:27 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:05:27 [ERROR] Wont import module Template_plugin because its disabled
+00:05:27 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:05:27 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:05:27 [WARNING] global plugin configs for Newpluginlol dont exist
+00:18:44 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:18:44 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:18:44 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:18:44 [ERROR] Wont import module Template_plugin because its disabled
+00:18:44 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:18:44 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:18:44 [WARNING] global plugin configs for Newpluginlol dont exist
+00:20:01 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:20:01 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:20:01 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:20:01 [ERROR] Wont import module Template_plugin because its disabled
+00:20:01 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:20:01 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:20:01 [WARNING] global plugin configs for Newpluginlol dont exist
+00:21:18 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:21:18 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:21:18 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:21:18 [ERROR] Wont import module Template_plugin because its disabled
+00:21:18 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:21:18 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:21:18 [WARNING] global plugin configs for Newpluginlol dont exist
+00:23:09 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:23:09 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:23:09 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:23:09 [ERROR] Wont import module Template_plugin because its disabled
+00:23:09 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:23:09 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:23:09 [WARNING] global plugin configs for Newpluginlol dont exist
+00:25:50 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:25:50 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:25:50 [ERROR] Wont import module Newpluginlol because its disabled
+00:25:50 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:25:50 [ERROR] Wont import module Template_plugin because its disabled
+00:25:50 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:25:50 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:25:55 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:25:55 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:25:55 [ERROR] Wont import module Newpluginlol because its disabled
+00:25:55 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:25:55 [ERROR] Wont import module Template_plugin because its disabled
+00:25:55 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:25:55 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:26:22 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:26:22 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:26:22 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:26:22 [ERROR] Wont import module Template_plugin because its disabled
+00:26:22 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:26:22 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:26:32 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:26:32 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:26:32 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:26:32 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:26:32 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:26:34 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:26:34 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:26:34 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:26:34 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:26:34 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:28:58 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:28:58 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:28:58 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:28:58 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:28:58 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:29:23 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:29:23 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:29:23 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:29:23 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:29:23 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+00:30:19 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+00:30:19 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+00:30:19 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+00:30:19 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+00:30:19 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present

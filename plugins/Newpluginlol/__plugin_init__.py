@@ -10,8 +10,8 @@
 # only edit onwards from the "EDIT FROM HERE" flag as the first part is just operative and changing it might break your plugin
 #---------------------------------------------------------------
 class PluginData():
-    name = "TemplatePlugin"
-    version = "1.0"
+    name = "NewPluginLol"
+    version = "1.3cv"
     description = "This is a template plugin"
     path = "/plugins/Template_plugin/"
     

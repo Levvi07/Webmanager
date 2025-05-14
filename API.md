@@ -534,7 +534,7 @@
 ```
 
 ### Get Active Config
-##### Permission Level: Write (1)
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
@@ -571,15 +571,15 @@
 ```
 
 ### Get plugin data
-##### Permission Level: Write (1)
+##### Permission Level: Read (0)
 
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
+| name | A plugin's name | ["plugin1", "plugin2"] | x |
 
 - Name must be a json array
-- Returns data about 1 or more plugins as seperate objects => [{data1},{data2},{data3}]
+- Returns data about 1 or more plugins as a JSON object => ["plugin1":{data1},"plugin2":{data2},"plugin3":{data3}]
 
 ```json
 {  
@@ -595,7 +595,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
+| name | A plugin's name | Template_plugin | x |
 | enabled | See below | 1 |  |
 
 - "enabled" field =>
@@ -618,7 +618,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
+| name | A plugin's name | Template_plugin | x |
 | key | Set the key of the new config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
 
@@ -663,7 +663,7 @@
 
 ```json
 {  
-    "action": "change_pl_config",  
+    "action": "remove_pl_config",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "name": "plugin1",
     "key":"New_key"

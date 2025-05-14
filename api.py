@@ -1019,3 +1019,244 @@ def remove_config():
     f.write(jsonobj)
     f.close()
     return "200 OK"
+
+@action("change_config", 1, ["token", "key", "value"])
+def change_config():
+    config_file = open("./data/site_configs.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+    r_obj = {}
+    for k in config_data:
+            if k == data["key"]:
+                r_obj[data["key"]] = data["value"]
+            else:
+                r_obj[k] = config_data[k]
+
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(r_obj)
+    keys = list(r_obj)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{r_obj[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "200 OK"
+
+@action("get_pl_list", 0, ["token"])
+def get_pl_list():
+    pl_list = os.listdir("./plugins")
+    pl_list.remove("__pycache__")
+    pl_list.remove("__init__.py")
+    
+    return pl_list
+
+@action("get_pl", 0, ["token", "name"])
+def get_pl():
+    r_obj = {}
+    pl_list = os.listdir("./plugins")
+    pl_list.remove("__pycache__")
+    pl_list.remove("__init__.py")
+    for n in data["name"]:
+        if n not in pl_list:
+            r_obj[n] = "Plugin doesn't exist!"
+            continue
+        else:
+            r_obj[n] = {}
+        
+        #Plugin_data
+        cur_data = {}
+        try:
+            pl_data = open("./plugins/" + n + "/__plugin_init__.py")
+            pl_data = pl_data.read().split("PluginData():")[1].split("import os")[0]
+            pl_split = pl_data.split("\n")
+            print(pl_data.split("\n"))
+            name_line = pl_split[1]
+            version_line = pl_split[2]
+            desc_line = pl_split[3]
+            path_line = pl_split[4]
+            cur_data["name"] = name_line.split("=", 1)[1].replace("\"", "").strip()
+            cur_data["version"] = version_line.split("=", 1)[1].replace("\"", "").strip()
+            cur_data["description"] = desc_line.split("=", 1)[1].replace("\"", "").strip()
+            cur_data["path"] = path_line.split("=", 1)[1].replace("\"", "").strip()
+            #cur_data["path"] = path_line.split("path", 1)[1].replace("=", "").replace("\"", "").strip().split("\n")[0]
+        except Exception as e:
+            print(e)
+            cur_data = "No data, missing __plugin_init__.py"
+        finally:
+            r_obj[n]["plugin_data"] = cur_data
+
+        #enabled status
+        cur_data = {}
+        try:
+            for i in range(len(dr.plugin_enabled_data)-1):
+                if dr.plugin_enabled_data[i+1][0] == n:
+                    cur_data = dr.plugin_enabled_data[i+1][1]
+        except Exception as e:
+            print(e)
+            cur_data = "Enabled status is not set"
+        finally:
+            r_obj[n]["enabled"] = cur_data
+
+
+        #plugin configs
+        cur_data = {}
+        try:
+            pl_data = open("./plugins/" + n + "/__plugin_configs__.json")
+            cur_data = json.loads(pl_data.read())
+            pl_data.close()
+        except Exception as e:
+            print(e)
+            cur_data = "No Config file present for this plugin"
+        finally:
+            r_obj[n]["plugin_config"] = cur_data
+
+
+    return r_obj
+
+
+
+@action("change_pl_status", 1, ["token", "name"])
+def change_pl_status():
+    if type(data["name"]) != str:
+        return "400 Bad Request; name must be a string"
+    en_data = dr.plugin_enabled_data
+    for i in range(len(en_data)-1):
+        if en_data[i+1][0] == data["name"]:
+            if "enabled" in data:
+                if str(data["enabled"]) != "0" and str(data["enabled"]) != "1":
+                    return "400 Bad Request; enabled must be either 0, 1, or left empty"
+                en_data[i+1][1] = str(data["enabled"])
+            else:
+                en_data[i+1][1] = str(int(not int(en_data[i+1][1])))
+            break
+    
+    f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in en_data:
+        writer.writerow(row)
+    f.close()
+
+    return "200 OK"
+
+
+@action("add_pl_config", 1, ["token", "name", "key", "value"])
+def add_pl_config():
+    k = data["key"]
+    v = data["value"]
+    name = data["name"]
+
+    if type(name) != str:
+        return "400 Bad Request; name must be a string"
+
+    if name not in os.listdir("./plugins"):
+        return "400 Bad Request; Plugin doesn't exist"
+    if " " in k:
+        return "400 Bad Request; Key must not contain spaces!"
+    
+    try:
+        config_file = open(f"./plugins/{name}/__plugin_configs__.json")
+    except:
+        config_file = open(f"./plugins/{name}/__plugin_configs__.json", "x")
+        config_file.write("{}")
+        config_file.close()
+        config_file = open(f"./plugins/{name}/__plugin_configs__.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+
+    if k in config_data.keys():
+        return "400 Bad Request; Key already exists!"
+
+    config_data[k] = v
+
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(config_data)
+    keys = list(config_data)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{config_data[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open(f"./plugins/{name}/__plugin_configs__.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "200 OK"
+
+
+@action("remove_pl_config", 1, ["token", "key", "name"])
+def remove_pl_config():
+    name = data["name"]
+    if type(name) != str:
+        return "400 Bad Request; name must be a string"
+
+    if name not in os.listdir("./plugins"):
+        return "400 Bad Request; Plugin doesn't exist"
+    config_file = open(f"./plugins/{name}/__plugin_configs__.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+
+    if data["key"] not in config_data.keys():
+        return "400 Bad Request; Key doesn't exist!"
+    
+    new_config_data = {}
+    for k in config_data.keys():
+        if k != data["key"]:
+            new_config_data[k] = config_data[k]
+
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(new_config_data)
+    keys = list(new_config_data)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{new_config_data[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open(f"./plugins/{name}/__plugin_configs__.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "200 OK"
+
+@action("change_pl_config", 1, ["token", "key", "value", "name"])
+def change_pl_config():
+    name = data["name"]
+    if type(name) != str:
+        return "400 Bad Request; name must be a string"
+
+    if name not in os.listdir("./plugins"):
+        return "400 Bad Request; Plugin doesn't exist"
+    config_file = open(f"./plugins/{name}/__plugin_configs__.json")
+    config_data = config_file.read()
+    config_file.close()
+    config_data = json.loads(config_data)
+    r_obj = {}
+    for k in config_data:
+            if k == data["key"]:
+                r_obj[data["key"]] = data["value"]
+            else:
+                r_obj[k] = config_data[k]
+
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(r_obj)
+    keys = list(r_obj)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{r_obj[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open(f"./plugins/{name}/__plugin_configs__.json", "w")
+    f.write(jsonobj)
+    f.close()
+    return "200 OK"
