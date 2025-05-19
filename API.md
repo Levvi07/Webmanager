@@ -70,9 +70,9 @@
 | Full name | The full name of the searched user | Admin Adminton |  |
 | Groups | A group id (only one id at a time) | 1 |  |
 | Roles | A role id (only one id at a time) | 1 |  |
-| Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
+| Description | A string of description  (snippets dont work, full text is needed)| Description |  |
 | IsLoggedIn | Either 0 or 1 shows whether a user is logged in at the moment | 1 |  |
-| API_access | 1 or 0; Whether the user has access to the API | 1 |  |
+| API_access | -1, 1 or 0; Whether the user has access to the API | 1 |  |
 
 - Used to acquire user data
 - One may either use it without arguments, or filter for any of the following attributes:
@@ -112,11 +112,11 @@
 | Name | The name of the searched user | admin | x |
 | Email | The email of the searched user | admin@example.com | x |
 | Full name | The full name of the searched user | Admin Adminton | x |
-| Password | A password | 1 | x |
-| Groups | An array of group ids | 1 |  |
-| Roles | An array of role ids | 1 |  |
+| Password | A password | Password123 | x |
+| Groups | An array of group ids | [1,2] |  |
+| Roles | An array of role ids | [1] |  |
 | Description | A string of description  (snippets dont work, full text is needed)| Description |  |
-| API_access | 1 or 0; Whether the user has access to the API | 1 |  |
+| API_access | -1, 1 or 0; Whether the user has access to the API | 1 |  |
 
 ```json
 {  
@@ -159,10 +159,10 @@
 | Name | The name of the searched user | admin |  |
 | Email | The email of the searched user | admin@example.com |  |
 | Full name | The full name of the searched user | Admin Adminton |  |
-| Groups | An array of group ids | 1 |  |
-| Roles | An array of role ids | 1 |  |
+| Groups | An array of group ids | [1] |  |
+| Roles | An array of role ids | [1,2] |  |
 | Description | A string of description  (snippets dont work, full text is neededd)| Description |  |
-| API_access | 1 or 0; Whether the user has access to the API | 1 |  |
+| API_access | -1, 1 or 0; Whether the user has access to the API | 1 |  |
 
 - Set fields get modified, unset fields stay the same
 - Not possible to modify password, for safety reasons
@@ -237,7 +237,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| ID | The ID of the searched role | admin | x |
+| ID | The ID of the searched role | 1 | x |
 
 ```json
 {  
@@ -253,7 +253,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| ID | The ID of the searched role | admin | x |
+| ID | The ID of the searched role | 1 | x |
 | Name | The name of the searched role | admin |  |
 | Perm_level | The perm level of the role | 5 |  |
 | Description | A string of description  (snippets dont work, full text is needed)| Description |  |
@@ -326,7 +326,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| ID | The ID of the searched group | admin | x |
+| ID | The ID of the searched group | 1 | x |
 
 ```json
 {  
@@ -342,7 +342,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| ID | The ID of the searched group | admin | x |
+| ID | The ID of the searched group | 1 | x |
 | Name | The name of the searched group | admin |  |
 | Perm_level | The perm level of the group | 5 |  |
 | Description | A string of description  (snippets dont work, full text is needed)| Description |  |
@@ -368,22 +368,11 @@
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | endpoint | The endpoint | /admin/* | x |
 
-- access_role/groups/users_id must be either a single integer or an arary of them
-- When searching by perm level 3 filters are availabe:
-    - `1` means the `perm_level==1`
-    - `1+` means the `perm_level>=1`
-    - `1-` means the `perm_level<=1`
-
 ```json
 {  
     "action": "get_access_rule",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
-    "endpoint":"/admin/*",
-    "AccessLevel":0,
-    "access_roles_id":[1,2,3],
-    "access_groups_id":1,
-    "access_users_id":-1,
-    "perm_level":2
+    "endpoint":"/admin/*"
 }  --> json
 ```
 
@@ -400,7 +389,7 @@
 | access_users_id | A group of user ids that may be granted access | [1,2,3] |  |
 | perm_level | A number that sets the permission level one must have to access this endpoint | 1 | x |
 
-- access_roles/groups/users_id must be either an array of integers
+- access_roles/groups/users_id must be an array of integers
 
 ```json
 {  
@@ -431,7 +420,7 @@
 }  --> str
 ```
 
-### Modify a site permission rule
+### Modify a site access rule
 ##### Permission Level: Write (1)
 
 | Name | Description | Example | Required |
@@ -663,7 +652,7 @@
 
 ```json
 {  
-    "action": "remove_pl_config",  
+    "action": "remove _pl_config",  
     "token":"1|admin|3c8ce0623a0b56ca7550d170fcefb6",
     "name": "plugin1",
     "key":"New_key"
