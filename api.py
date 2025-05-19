@@ -100,6 +100,8 @@ def handle(req):
     
     #return action at the end
     return actions[action]()
+
+
 @action("login", 0, ["username", "password"])
 def login():
     username = data["username"]
@@ -260,6 +262,7 @@ def get_user():
             ret_value.append(user)
         
     #return
+    CreateLog(f"User {data['token'].split('|')[1]} requested user data through the API", 0, "API/Users")
     return ret_value
 
 @action("add_user", 1, ["token", "name", "email", "full_name", "password"])
@@ -313,8 +316,10 @@ def add_user():
     form = {"fullname":full_name, "username":name, "password1":password, "password2":password, "email":email, "description":description, "roles_post":roles, "groups_post":groups, "API_select":str(API_access)}
     _,_,msg = handle_users.AddUser(form)
     if msg != "User added succesfully":
+        CreateLog(f"User {data['token'].split('|')[1]} failed to add user `{data['name']}` through the API for the following reason:{msg}", 2, "API/Users")
         return "400 Bad Request;" + msg
     else:
+        CreateLog(f"User {data['token'].split('|')[1]} added user `{data['name']}` through the API", 1, "API/Users")
         return "200 OK;" + msg
     
 @action("remove_user", 1, ["token", "ID"])
@@ -322,8 +327,10 @@ def remove_user():
     ID = data["ID"]
     #check that user exists
     if int(ID) > len(dr.users_data[1:]):
+        CreateLog(f"User {data['token'].split('|')[1]} failed to remove user with ID `{data['ID']}` through the API because user doesn't exist", 1, "API/Users")
         return "400 Bad Request; Non-existent user"
     handle_users.remove_user(int(ID))
+    CreateLog(f"User {data['token'].split('|')[1]} removed user with ID `{data['ID']}` through the API", 1, "API/Users")
     return "200 OK; User removed"
 
 @action("modify_user", 1, ["token", "ID"])
@@ -374,6 +381,7 @@ def modify_user():
             usernames.append(dr.users_data[i+1][1])
         
         if filtervalue["name"] in usernames:
+            CreateLog(f"User {data['token'].split('|')[1]} failed to modify user with ID `{data['ID']}` through the API because username is already in use", 1, "API/Users")
             return "409 Conflict; Username already in use"
 
     user_ids = {"name":1, "email":2, "full_name":3, "description":4}
@@ -407,10 +415,11 @@ def modify_user():
         writer.writerow(row)
     f.close()
 
+    CreateLog(f"User {data['token'].split('|')[1]} modified user with ID `{data['ID']}` through the API", 1, "API/Users")
     return "200 OK; User modified"
 
 @action("get_role", 0, ["token"])
-def get_role_data():
+def get_role():
     #if set to other than None we filter for it
     filtervalue = {"ID":None, "name":None, "perm_level":None, "description":None}
     for k in filtervalue.keys():
@@ -475,6 +484,7 @@ def get_role_data():
             ret_value.append(return_json)
 
     #return
+    CreateLog(f"User {data['token'].split('|')[1]} requested roles data through the API", 0, "API/Roles")
     return ret_value
 
 
@@ -508,6 +518,7 @@ def add_role():
         writer.writerow(row)
     f.close()
 
+    CreateLog(f"User {data['token'].split('|')[1]} added role {data['name']} through the API", 1, "API/Roles")
     return "200 OK"
 
 
@@ -536,6 +547,8 @@ def remove_role():
         writer.writerow(row)
     f.close()
 
+
+    CreateLog(f"User {data['token'].split('|')[1]} removed role with ID {data['ID']} through the API", 1, "API/Roles")
     return "200 OK"
 
 @action("modify_role", 1, ["token", "ID"])
@@ -571,11 +584,12 @@ def modify_role():
         writer.writerow(row)
     f.close()
 
+    CreateLog(f"User {data['token'].split('|')[1]} modified role with ID {data['ID']} through the API", 1, "API/Roles")
     return "200 OK"
 
 
 @action("get_group", 0, ["token"])
-def get_group_data():
+def get_group():
     #if set to other than None we filter for it
     filtervalue = {"ID":None, "name":None, "perm_level":None, "description":None}
     for k in filtervalue.keys():
@@ -639,6 +653,7 @@ def get_group_data():
             ret_value.append(return_json)
 
     #return
+    CreateLog(f"User {data['token'].split('|')[1]} requested groups data through the API", 0, "API/Groups")
     return ret_value
 
 
@@ -672,6 +687,7 @@ def add_group():
         writer.writerow(row)
     f.close()
 
+    CreateLog(f"User {data['token'].split('|')[1]} added group {data['name']} through the API", 1, "API/Groups")
     return "200 OK"
 
 
@@ -700,6 +716,7 @@ def remove_group():
         writer.writerow(row)
     f.close()
 
+    CreateLog(f"User {data['token'].split('|')[1]} removed group with ID {data['ID']} through the API", 1, "API/Groups")
     return "200 OK"
 
 
@@ -735,6 +752,8 @@ def modify_group():
     for row in new_groups_data:
         writer.writerow(row)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} modified group with ID {data['ID']} through the API", 1, "API/Groups")
     return "200 OK"
 
 
@@ -755,6 +774,7 @@ def get_access_rule():
     if r_arr == {}:
         return "400 Bad Request; No such endpoint"
     else:
+        CreateLog(f"User {data['token'].split('|')[1]} requested data about the site access rules of endpoint {data['endpoint']} through the API", 0, "API/site_perms")
         return r_arr
     
 
@@ -826,6 +846,8 @@ def create_access_rule():
     for row in r_arr:
         writer.writerow(row)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} created a site access rule for the endpoint {data['endpoint']} through the API", 1, "API/site_perms")
     return "200 OK"
 
 
@@ -845,6 +867,8 @@ def remove_access_rule():
         for row in r_arr:
             writer.writerow(row)
         f.close()
+        
+        CreateLog(f"User {data['token'].split('|')[1]} removed a site access rule for the endpoint {data['endpoint']} through the API", 1, "API/site_perms")
         return "200 OK"
     
 
@@ -913,6 +937,8 @@ def modify_access_rule():
     for row in r_arr:
         writer.writerow(row)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} modified a site access rule for the endpoint {data['endpoint']} through the API", 1, "API/site_perms")
     return "200 OK"
 
 
@@ -922,6 +948,7 @@ def get_config():
     config_data = config_file.read()
     config_file.close()
     config_data = json.loads(config_data)
+    CreateLog(f"User {data['token'].split('|')[1]} requested the site's config file", 1, "API/configs")
     if "config" not in data:
         return config_data
     else:
@@ -940,6 +967,7 @@ def get_config():
 
 @action("get_active_config", 0, ["token"])
 def get_active_config():
+    CreateLog(f"User {data['token'].split('|')[1]} requested the site's active config", 1, "API/configs")
     if "config" not in data:
         return dr.site_config_data
     else:
@@ -988,6 +1016,8 @@ def add_config():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} added a new config {data['key']}:{data['value']}", 1, "API/configs")    
     return "200 OK"
 
 @action("remove_config", 1, ["token", "key"])
@@ -1018,6 +1048,8 @@ def remove_config():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} removed a config: {data['key']}", 1, "API/configs")
     return "200 OK"
 
 @action("change_config", 1, ["token", "key", "value"])
@@ -1046,6 +1078,8 @@ def change_config():
     f = open("./data/site_configs.json", "w")
     f.write(jsonobj)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} modified a config {data['key']}:{data['value']}", 1, "API/configs")
     return "200 OK"
 
 @action("get_pl_list", 0, ["token"])
@@ -1054,6 +1088,7 @@ def get_pl_list():
     pl_list.remove("__pycache__")
     pl_list.remove("__init__.py")
     
+    CreateLog(f"User {data['token'].split('|')[1]} requested a list of plugins", 0, "API/plugins")
     return pl_list
 
 @action("get_pl", 0, ["token", "name"])
@@ -1116,13 +1151,15 @@ def get_pl():
         finally:
             r_obj[n]["plugin_config"] = cur_data
 
-
+    CreateLog(f"User {data['token'].split('|')[1]} requested data about the plugin(s) {data['name']}", 0, "API/plugins")
     return r_obj
 
 
 
 @action("change_pl_status", 1, ["token", "name"])
 def change_pl_status():
+    #for logging
+    end_status = 0
     if type(data["name"]) != str:
         return "400 Bad Request; name must be a string"
     en_data = dr.plugin_enabled_data
@@ -1134,6 +1171,7 @@ def change_pl_status():
                 en_data[i+1][1] = str(data["enabled"])
             else:
                 en_data[i+1][1] = str(int(not int(en_data[i+1][1])))
+            end_status = en_data[i+1][1]
             break
     
     f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
@@ -1142,6 +1180,7 @@ def change_pl_status():
         writer.writerow(row)
     f.close()
 
+    CreateLog(f"User {data['token'].split('|')[1]} changed the status of the plugin {data['name']} to {str(end_status)}", 1, "API/plugins")
     return "200 OK"
 
 
@@ -1188,6 +1227,8 @@ def add_pl_config():
     f = open(f"./plugins/{name}/__plugin_configs__.json", "w")
     f.write(jsonobj)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} added a new config {data['key']}:{data['value']} to plugin {data['name']}", 1, "API/plugin_configs")  
     return "200 OK"
 
 
@@ -1225,6 +1266,8 @@ def remove_pl_config():
     f = open(f"./plugins/{name}/__plugin_configs__.json", "w")
     f.write(jsonobj)
     f.close()
+
+    CreateLog(f"User {data['token'].split('|')[1]} removed a config: {data['key']} from plugin {data['name']}", 1, "API/plugin_configs")
     return "200 OK"
 
 @action("change_pl_config", 1, ["token", "key", "value", "name"])
@@ -1259,4 +1302,6 @@ def change_pl_config():
     f = open(f"./plugins/{name}/__plugin_configs__.json", "w")
     f.write(jsonobj)
     f.close()
+    
+    CreateLog(f"User {data['token'].split('|')[1]} modified a config {data['key']}:{data['value']} of plugin {data['name']}", 1, "API/plugin_configs")
     return "200 OK"

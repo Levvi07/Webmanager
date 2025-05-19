@@ -54,19 +54,18 @@ You can add/delete/modify configs through the website, be vary not to delete the
 - Logging is done with the "LLogger" module, import it into any program to log
 - Logging may be turned on/off using the config
 - The module logs into the folder specified in the config folder
-- When logging, you must specify a category, a severity, the text of the error
+- When logging, you must specify a category, a severity, and the text of the error
 - In order to test that logging works, press "Test logging" on the logs page
-- In order not to break stuff, backslashes are removed, so the formatting wont cause probllems
+- In order not to break stuff, backslashes are removed, so the formatting wont cause problems
 - Usage:
     ```
         from LLogger import *
         CreateLog(category, severity, text)
     ```
 - Parameters:
-        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./logs/cat1/cat2/cat3/service/yyyy-mm-dd.log"
+        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./$LOG_FOLDER$/cat1/cat2/cat3/service/yyyy-mm-dd.log"
         severity: 0-2 --> 0: [MESSAGE]    1: [WARNING]      2: [ERROR]
         text: whats going to be written in the logs
-
 
 ### Auto Disable
 - Used to disable users, after a certain amout of incorrect login tries

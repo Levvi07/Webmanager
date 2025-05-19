@@ -427,10 +427,10 @@
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
 | endpoint | The endpoint | /admin/* | x |
-| access_level | A number that sets the permission level one must have to access this endpoint | /admin/* |  |
-| access_roles_id | A group of roleids that may be granted access (role1;role2;role3) | /admin/* |  |
-| access_groups_id | A group of groupids that may be granted access | group1;group2;group3 |  |
-| access_users_id | A group of user ids that may be granted access | user1;user2;user3 |  |
+| access_level | A number that sets the permission level one must have to access this endpoint | 0 |  |
+| access_roles_id | A group of roleids that may be granted access (role1;role2;role3) | [1,2,3] |  |
+| access_groups_id | A group of groupids that may be granted access | [1,2,3] |  |
+| access_users_id | A group of user ids that may be granted access | [1,2,3] |  |
 | perm_level | sets the access mode of  the endpoint (see docs) | 1 |  |
 
 - Endpoints are not to be modified, create a new rule for that
@@ -456,7 +456,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| config | Get the value of one or more specific configs | TokenExpire;UserDisabledSite |  |
+| config | Get the value of one or more specific configs | ["AutoDisable", "LoggingEnabled"] |  |
 
 - If no argument is passed to it, the API will return all the configs
 - In order to get specific configs, pass them as an array
@@ -494,7 +494,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| key | Set the key of the new config | NewConfig | x |
+| key | Set the key of the old config | old_config | x |
 
 ```json
 {  
@@ -510,7 +510,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| key | Set the key of the new config | NewConfig | x |
+| key | Set the key of the config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
 
 ```json
@@ -528,7 +528,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| config | Get the value of one or more specific configs | TokenExpire;UserDisabledSite |  |
+| config | Get the value of one or more specific configs | ["AutoDisable", "LoggingEnabled"] |  |
 
 - If no argument is passed to it, the API will return all the configs
 - In order to get specific configs, pass them as an array
@@ -627,7 +627,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
+| name | A plugin's name | Template_plugin | x |
 | key | Set the key of the new config | NewConfig | x |
 | value | Set the value of the new config | 15 | x |
 
@@ -647,7 +647,7 @@
 | Name | Description | Example | Required |
 | ---- | ----------- | ------- | :------: |
 | token | An active token | 1\|admin\|3c8ce0623a0b56ca7550d170fcefb6 | x |
-| name | A plugin's name | Template_plugin;plugin2;plugin3 | x |
+| name | A plugin's name | Template_plugin | x |
 | key | Set the key of the new config | NewConfig | x |
 
 ```json

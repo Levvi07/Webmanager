@@ -1,0 +1,8 @@
+00:55:40 [MESSAGE] User Levi23 requested user data through the API
+00:55:56 [MESSAGE] User Levi23 added user admin233 through the API
+00:56:38 [MESSAGE] User Levi23 failed to add user `admin233` through the API for the following reason:User already exists
+00:58:41 [WARNING] User Levi23 removed user with ID `6` through the API
+00:59:43 [WARNING] User Levi23 failed to remove user with ID `6` through the API cause user doesn't exist
+00:59:47 [MESSAGE] User Levi23 requested user data through the API
+01:00:46 [MESSAGE] User Levi23 requested user data through the API
+01:00:55 [WARNING] User Levi23 modified user with ID `4` through the API
