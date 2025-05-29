@@ -1542,7 +1542,8 @@ def plugin_sheet(p):
     #display config
     if os.path.exists(f"./plugins/{p}/__plugin_configs__.json"):
         try:
-            conf = open(f"./plugins/{p}/__plugin_configs__.json").read()
+            conf_file = open(f"./plugins/{p}/__plugin_configs__.json")
+            conf = conf_file.read()
             confdict = {}
             for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
                 confdict[pair.split(":")[0].replace(" ", "")] = pair.split(":")[1].replace(" ", "")
@@ -1553,7 +1554,7 @@ def plugin_sheet(p):
                 conf += f"{key} = <input value='{confdict[key]}' name='{key}'> <a href='/admin/delete_pl_config/{p}/{key}'>Delete</a><br>"
             conf += '<input type="submit" value="Change Configs" id="conf_change_submit">'
         except:
-            conf = "Configs are the incorrect format"
+            conf = "Configs are empty or incorrectly formatted"
     else:
         conf = "__plugin_configs__.json does not exist"
 
@@ -1623,22 +1624,32 @@ def add_pl_config():
     if key == "" or value == "":
         return "Both key, and value must be a valid string, without spaces!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
 
+    if not os.path.exists(f"./plugins/{pl_name}/__plugin_configs__.json"):
+        f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "x")
+        f.write("{}")
+        f.close()
+
+
     f = open(f"./plugins/{pl_name}/__plugin_configs__.json")
     newfile = ""
-    for line in f.readlines():
-        try:
-            if key != line.split(":")[0].replace("\"", "").replace(" ", ""):
-                newfile += line
-            else:
-                return "Config already exists!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}       
-        except:
-            pass
-    #we delete the \n} from the end to make room for new element, cause last element needs a comma; gets added back
-    newfile = newfile[:-2]
-    #added weirdly cause f string bs
-    newfile += f",\n\"{key}\":\"{value}\"\n" + "}"
+    if f.read().replace("{", "").replace("}", "").replace("\n", "").replace(" ", "") == "":
+        newfile = "{\n\"" + key + "\":\"" + value + "\"\n}"
+    else:
+        f.seek(0)
+        for line in f.readlines():
+            try:
+                if key != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                    newfile += line
+                else:
+                    return "Config already exists!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}       
+            except:
+                pass
+        #we delete the \n} from the end to make room for new element, cause last element needs a comma; gets added back
+        newfile = newfile[:-2]
+        #added weirdly cause f string bs
+        newfile += f",\n\"{key}\":\"{value}\"\n" + "}"
 
-    f.close()
+        f.close()
     f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
     f.write(newfile)
     f.close()
@@ -1825,4 +1836,11 @@ def static_sites(p):
         website = dr.site_config_data["UserDisabledSite"]  
         return "", {"Refresh":f"0;url={website}"}
 
-app.run(debug=True)
+port = 5000
+#try fetching the port
+try:
+    port = int(dr.site_config_data["ServerPort"])
+    print(port)
+except:
+    CreateLog("Port could not be fetched, staring on standard port: 5000", 0, "SystemLogs/Startup")
+app.run(debug=True, port=port)

@@ -9,5 +9,6 @@
 "PluginDefaultState":"1",
 "NonExistentUserLogs":"0",
 "AutoDisable":"2",
-"APIEnabled":"1"
+"APIEnabled":"1",
+"ServerPort":"80"
 }
