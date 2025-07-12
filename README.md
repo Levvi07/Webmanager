@@ -63,9 +63,9 @@ You can add/delete/modify configs through the website, be vary not to delete the
         CreateLog(category, severity, text)
     ```
 - Parameters:
-        category: written as "cat1/cat2/cat3/service" ==> File is gonna be created at "./$LOG_FOLDER$/cat1/cat2/cat3/service/yyyy-mm-dd.log"
+        category: written as "cat1/cat2/cat3/service" ==> File is going to be created at "./$LOG_FOLDER$/cat1/cat2/cat3/service/yyyy-mm-dd.log"
         severity: 0-2 --> 0: [MESSAGE]    1: [WARNING]      2: [ERROR]
-        text: whats going to be written in the logs
+        text: what's going to be written in the logs
 
 ### Auto Disable
 - Used to disable users, after a certain amout of incorrect login tries
@@ -73,3 +73,14 @@ You can add/delete/modify configs through the website, be vary not to delete the
 - A role called "Disabled" must exist for this to function, and its perm level must be set to -1 (or it wont actually disable the users)
 - set AutoDisable config to the number of tries, after which the program should disable a profile
 - __*WARNING*__: ONLY do this if ssh or other contact to the machine is possible, otherwise its possible to lock all accounts, by spamming login requests
+
+### Auto Update
+- SystemUpdateFreq MUST be present in the config, and must be an integer, otherwise the Auto Update system just won't work
+- SystemUpdateFreq represents the number of minutes between each check to the selected git repo
+- if SystemUpdateFreq is less than 1, the Auto update system will turn off
+
+- SystemUpdateRepo is the link to the correct branch you want to update from. 
+- If "/tree/REPO" is not specified the system will default to "/tree/stable" (e.g. https://github.com/Levvi07/Webmanager/tree/stable)
+
+- The Auto Update system only updates system files, and the format of csv files (if changed). This means that folders like `./plugins` and `./logs` will remain untouched.
+- Should there be a change in the csv files, you will have to download the current csv data file, fill any new columns with data, and upload a csv file of the correct format, OR press the "Leave Empty" button, to leave all new columns empty. If columns are deleted you will have to confirm the changes, except if "AutoConfirmDeletes" is set to 1 in the configs.

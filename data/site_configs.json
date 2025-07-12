@@ -10,5 +10,7 @@
 "NonExistentUserLogs":"0",
 "AutoDisable":"2",
 "APIEnabled":"1",
-"ServerPort":"80"
+"ServerPort":"80",
+"SystemUpdateFreq":"1",
+"SystemUpdateRepo":"asd"
 }

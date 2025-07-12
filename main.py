@@ -7,6 +7,7 @@ import importlib, time
 from LLogger import *
 import shutil
 import api
+import threading
 
 
 dr.init()
@@ -89,6 +90,42 @@ def reload_plugins():
 reload_plugins()
 #pass to API so it can reload too
 api.reload_plugins_func = reload_plugins
+
+# Auto Update System
+# This one actually does the updating 
+def UpdateSystemFunc():
+    print("Updating system lol")
+
+# This one just times it
+def UpdateSystemTimer():
+    #see if Freq is correct
+    try:
+        freq = dr.site_config_data["SystemUpdateFreq"]
+        freq = int(freq)
+        if freq < 1:
+            raise Exception("Disabled")
+    except Exception as e:
+        if str(e) == "Disabled":
+            CreateLog(text="SystemUpdateFreq is less than 1, Auto Update system is disabled", severity=0, category="SystemLogs/AutoUpdate")
+        else:
+            CreateLog(text="SystemUpdateFreq is not present, or is not an integer. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
+        return
+    
+    #check if the github page is valid af
+    #https://github.com/Levvi07/Webmanager/tree/stable
+    repo = dr.site_config_data["SystemUpdateRepo"]
+    if not repo.startswith("https://github.com/"):
+        CreateLog(text="SystemUpdateRepo MUST start with `https://github.com/` as only valid github repos are allowed. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
+        return
+    
+    
+    CreateLog(text="Auto Update system has started up!", severity=0, category="SystemLogs/AutoUpdate")
+    while 1:
+        UpdateSystemFunc()
+        time.sleep(freq*60)
+
+UpdateThread = threading.Thread(target=UpdateSystemTimer)
+UpdateThread.start()
 
 def serve_html_website(route):
     if not os.path.exists("./templates/" + route):
@@ -1775,6 +1812,10 @@ def remove_plugin():
         #nah, get confirm
         return serve_html_website("/admin/plugin_rm_confirm.html").replace("NAME", name)   
 
+@app.route("/admin/update_system.html", methods=["GET", "POST"])
+def update_system():
+    return serve_html_website("/admin/update_system.html")
+
 @app.route("/api/", methods=["GET"])
 def api_handle_get():
     if str(dr.site_config_data["APIEnabled"]) != "1":
@@ -1840,7 +1881,6 @@ port = 5000
 #try fetching the port
 try:
     port = int(dr.site_config_data["ServerPort"])
-    print(port)
 except:
     CreateLog("Port could not be fetched, staring on standard port: 5000", 0, "SystemLogs/Startup")
 app.run(debug=True, port=port)
