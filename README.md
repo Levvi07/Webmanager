@@ -80,7 +80,8 @@ You can add/delete/modify configs through the website, be vary not to delete the
 - if SystemUpdateFreq is less than 1, the Auto update system will turn off
 
 - SystemUpdateRepo is the link to the correct branch you want to update from. 
-- If "/tree/REPO" is not specified the system will default to "/tree/stable" (e.g. https://github.com/Levvi07/Webmanager/tree/stable)
+- If "/tree/REPO" is not specified the system will default to "/tree/stable" (e.g. https://github.com/Levvi07/Webmanager --> https://github.com/Levvi07/Webmanager/tree/stable)
+- Github repo MUST be public
 
 - The Auto Update system only updates system files, and the format of csv files (if changed). This means that folders like `./plugins` and `./logs` will remain untouched.
 - Should there be a change in the csv files, you will have to download the current csv data file, fill any new columns with data, and upload a csv file of the correct format, OR press the "Leave Empty" button, to leave all new columns empty. If columns are deleted you will have to confirm the changes, except if "AutoConfirmDeletes" is set to 1 in the configs.

@@ -8,7 +8,8 @@ from LLogger import *
 import shutil
 import api
 import threading
-
+import requests
+import zipfile
 
 dr.init()
 def create_app():
@@ -93,8 +94,54 @@ api.reload_plugins_func = reload_plugins
 
 # Auto Update System
 # This one actually does the updating 
+def CheckFiles(path, parent_folder):
+    for f in os.listdir(path):
+        if os.path.isfile(path + f):
+            #file, check the checksum, replace if needed
+            if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f):
+                print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+            else:
+                print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+        else:
+            #dir, recursive stuff, call checkfiles again
+            #we'll handle the data folder separately, its complicated
+            if f != "data":
+                CheckFiles(path + f + "/", parent_folder)
+            else:
+                pass
+
 def UpdateSystemFunc():
-    print("Updating system lol")
+    repo = dr.site_config_data["SystemUpdateRepo"]
+    if repo[-1] == "/":
+        repo = repo[:-1]
+    if "tree" not in repo:
+        repo += "tree/stable"
+    repo = repo.replace("https://github.com/", "")
+    
+    zip_url = "https://github.com/" + repo.split("/")[0] + "/" + repo.split("/")[1] + "/archive/refs/heads/" + repo.split("/")[-1] + ".zip"
+    
+    r = requests.get(zip_url, allow_redirects=True)
+    if not os.path.exists("./UPDATE_TEMP/"):
+        os.mkdir("./UPDATE_TEMP/")
+    open('./UPDATE_TEMP/' + repo.split("/")[-1] + ".zip", 'wb').write(r.content)
+
+    with zipfile.ZipFile('./UPDATE_TEMP/' + repo.split("/")[-1] + ".zip", 'r') as zip_ref:
+        zip_ref.extractall('./UPDATE_TEMP/')
+
+    # removing the zip file, as its not needed anymore, also the logs and plugins folder as they wont be changed
+    parent_folder = f'{repo.split("/")[1]}-{repo.split("/")[-1]}'
+    os.remove(f'./UPDATE_TEMP/{repo.split("/")[-1]}.zip')
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/logs'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/logs')
+
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/plugins'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/plugins')
+
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/__pycache__'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/__pycache__')
+    CheckFiles(f"./UPDATE_TEMP/{parent_folder}/", parent_folder)
+        
 
 # This one just times it
 def UpdateSystemTimer():
@@ -114,10 +161,13 @@ def UpdateSystemTimer():
     #check if the github page is valid af
     #https://github.com/Levvi07/Webmanager/tree/stable
     repo = dr.site_config_data["SystemUpdateRepo"]
+    if type(repo) != str:
+        CreateLog(text="SystemUpdateRepo MUST be a string. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
+        return
+    
     if not repo.startswith("https://github.com/"):
         CreateLog(text="SystemUpdateRepo MUST start with `https://github.com/` as only valid github repos are allowed. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
         return
-    
     
     CreateLog(text="Auto Update system has started up!", severity=0, category="SystemLogs/AutoUpdate")
     while 1:
@@ -1332,7 +1382,7 @@ def config_page():
     conf = open("./data/site_configs.json").read()
     confdict = {}
     for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
-        confdict[pair.split(":")[0].replace(" ", "")] = pair.split(":")[1].replace(" ", "")
+        confdict[pair.split(":")[0].replace(" ", "")] = "".join(pair.split(":")[1:]).replace(" ", "")
     
     #reusing it
     conf = ""
@@ -1883,4 +1933,4 @@ try:
     port = int(dr.site_config_data["ServerPort"])
 except:
     CreateLog("Port could not be fetched, staring on standard port: 5000", 0, "SystemLogs/Startup")
-app.run(debug=True, port=port)
+app.run(port=port)
