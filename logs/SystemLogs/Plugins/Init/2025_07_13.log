@@ -133,3 +133,8 @@
 03:12:27 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
 03:12:27 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
 03:12:27 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
+03:29:01 [ERROR] Cant initalise module 'dfgfgdh' because __plugin_init__.py is not present
+03:29:01 [ERROR] Cant initalise module 'more_plugins' because __plugin_init__.py is not present
+03:29:01 [ERROR] Cant initalise module 'second Plugin Lol' because __plugin_init__.py is not present
+03:29:01 [ERROR] Cant initalise module 'this is a veeeeeeeeeeerrrrrryy looooong plugin naaame' because __plugin_init__.py is not present
+03:29:01 [ERROR] Cant initalise module 'uhhhh whatever' because __plugin_init__.py is not present
