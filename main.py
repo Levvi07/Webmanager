@@ -99,7 +99,29 @@ def CheckFiles(path, parent_folder):
         if os.path.isfile(path + f):
             #file, check the checksum, replace if needed
             if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f):
+                # checking the checksum of the file in the system already installed, and in the zip
                 print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                core_sum = open(path + f, "rb").read()
+                print(path + f)
+                print("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                zip_sum = open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb").read()
+                try:
+                    zip_sum = str(zip_sum, "UTF-8")
+                    zip_sum = zip_sum.replace("\r\n", "\n")
+                    zip_sum = bytes(zip_sum, "UTF-8")
+                except:
+                    #not a text file so no need to correct \r\n issues
+                    pass
+
+                zip_sum = hashlib.md5(zip_sum).hexdigest()
+                core_sum = hashlib.md5(core_sum).hexdigest()
+                if zip_sum != core_sum:
+                    print(repr(zip_sum))
+                    print(repr(core_sum))
+                    os.remove("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                    shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                else:
+                    print("is ok lol")
             else:
                 print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                 shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
@@ -141,7 +163,7 @@ def UpdateSystemFunc():
     if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/__pycache__'):
         shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/__pycache__')
     CheckFiles(f"./UPDATE_TEMP/{parent_folder}/", parent_folder)
-        
+    shutil.rmtree("./UPDATE_TEMP")    
 
 # This one just times it
 def UpdateSystemTimer():
@@ -174,7 +196,7 @@ def UpdateSystemTimer():
         UpdateSystemFunc()
         time.sleep(freq*60)
 
-UpdateThread = threading.Thread(target=UpdateSystemTimer)
+UpdateThread = threading.Thread(target=UpdateSystemTimer, daemon=True)
 UpdateThread.start()
 
 def serve_html_website(route):
