@@ -1954,5 +1954,5 @@ port = 5000
 try:
     port = int(dr.site_config_data["ServerPort"])
 except:
-    CreateLog("Port could not be fetched, staring on standard port: 5000", 0, "SystemLogs/Startup")
+    CreateLog("Port could not be fetched, starting on standard port: 5000", 0, "SystemLogs/Startup")
 app.run(port=port)
