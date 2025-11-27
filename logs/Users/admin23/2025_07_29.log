@@ -1,0 +1,12 @@
+18:49:53 [WARNING] Unsuccesful login attempt by `admin23` with password `tucepI123` from 127.0.0.1!
+18:50:10 [WARNING] Unsuccesful login attempt by `admin23` with password `tucepI123` from 127.0.0.1!
+18:50:10 [WARNING] User `admin23` got disabled by Auto Disable system
+18:50:14 [WARNING] Unsuccesful login attempt by `admin23` with password `asd` from 127.0.0.1!
+18:50:14 [WARNING] User `admin23` got disabled by Auto Disable system
+18:50:18 [WARNING] Unsuccesful login attempt by `admin23` with password `123` from 127.0.0.1!
+18:50:18 [WARNING] User `admin23` got disabled by Auto Disable system
+18:51:12 [WARNING] The password for user admin23 has been changed by admin `Levi`!
+18:51:28 [MESSAGE] admin23 has logged in from 127.0.0.1 !
+18:51:49 [MESSAGE] admin23 has logged out!
+18:52:38 [MESSAGE] admin23 has logged in from 127.0.0.1 !
+18:54:30 [MESSAGE] admin23 has logged out!

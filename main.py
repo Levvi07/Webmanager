@@ -15,7 +15,6 @@ dr.init()
 def create_app():
     app = Flask(__name__)
     return app
-
 CreateLog(text="The app has started up!", severity=0, category="SystemLogs/Startup")
 
 #function for loading/reloading plugins
@@ -120,8 +119,6 @@ def CheckFiles(path, parent_folder):
                     print(repr(core_sum))
                     os.remove("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                     shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
-                else:
-                    print("is ok lol")
             else:
                 print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                 shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
@@ -151,7 +148,7 @@ def UpdateSystemFunc():
     with zipfile.ZipFile('./UPDATE_TEMP/' + repo.split("/")[-1] + ".zip", 'r') as zip_ref:
         zip_ref.extractall('./UPDATE_TEMP/')
 
-    # removing the zip file, as its not needed anymore, also the logs and plugins folder as they wont be changed
+    # removing the zip file, as its not needed anymore, also the logs, pycache and plugins folder as they wont be changed
     parent_folder = f'{repo.split("/")[1]}-{repo.split("/")[-1]}'
     os.remove(f'./UPDATE_TEMP/{repo.split("/")[-1]}.zip')
     if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/logs'):
@@ -1443,6 +1440,7 @@ def del_conf(p):
     f = open("./data/site_configs.json", "w")
     f.write(newfile)
     f.close()
+
     if "|" in request.cookies.get("token"):
             admin_name = request.cookies.get("token").split("|")[1]
     else:
@@ -1887,6 +1885,78 @@ def remove_plugin():
 @app.route("/admin/update_system.html", methods=["GET", "POST"])
 def update_system():
     return serve_html_website("/admin/update_system.html")
+
+@app.route("/admin/", methods=["GET"])
+def admin_dash():
+    perm_code = handle_users.check_site_perm("/admin/index.html/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    # the json arrays format is 
+    # {
+    # "Default":
+    #  [
+    #     [Tile1_Position, Tile1_Name, Tile1_Link],
+    #     [Tile2_Position, Tile2_Name, Tile2_Link],
+    #     [Tile3_Position, Tile3_Name, Tile3_Link]
+    #  ],
+    # "1":
+    # [
+    #     [Tile1_Position, Tile1_Name, Tile1_Link],
+    #     [Tile2_Position, Tile2_Name, Tile2_Link],
+    #     [Tile3_Position, Tile3_Name, Tile3_Link]
+    # ],
+    # "2":
+    # [
+    #     [Tile1_Position, Tile1_Name, Tile1_Link],
+    #     [Tile2_Position, Tile2_Name, Tile2_Link],
+    #     [Tile3_Position, Tile3_Name, Tile3_Link]
+    # ]
+    # }
+    # Default is used, when someone opens the dashboard for the first time.
+    # When assigning default, we still need to check perms for all the sites
+    tiles_config_file = open("./data/admin_dash_tiles.json")
+    tiles_data = json.loads(tiles_config_file.read())
+    tiles_config_file.close()
+    uid = str(request.cookies.get("token").split("|")[0])
+    try:
+        user_tiles_data = tiles_data[uid]
+    except KeyError:
+        #create it
+        tiles_data[str(uid)] = tiles_data["Default"]
+        user_tiles_data = tiles_data["Default"]
+        #write config
+        jsonobj = "{\n"
+        clen = len(tiles_data)
+        keys = list(tiles_data)
+        for i in range(clen):
+            jsonobj += f"\"{keys[i]}\":{str(tiles_data[keys[i]]).replace("\'", "\"")}"
+            if i != clen - 1:
+                jsonobj += ",\n"
+            else:
+                jsonobj += "\n}"    
+        f = open("./data/admin_dash_tiles.json", "w")
+        f.write(jsonobj)
+        f.close()
+    
+    site_structure = ""
+    return sorted(user_tiles_data)
+
+    ## make it so its recorded, which sites are linked to, and what position they are in. Make the editable through the website, and new links addable (per user) so the admin dashboard can be custom for everyone
+    ## When the user is on the page for making new links, give them the site hierarchy of the webmanager and let them choose from there. (check perms before letting them choose it)
+
+
+@app.route("/admin/index.html", methods=["GET"])
+def alt_admin_dash():
+    return admin_dash()
 
 @app.route("/api/", methods=["GET"])
 def api_handle_get():
