@@ -1651,7 +1651,7 @@ def plugin_sheet(p):
         try:
             conf_file = open(f"./plugins/{p}/__plugin_configs__.json")
             conf = conf_file.read()
-            confdict = {}
+            confdict = {}  
             for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
                 confdict[pair.split(":")[0].replace(" ", "")] = pair.split(":")[1].replace(" ", "")
     
