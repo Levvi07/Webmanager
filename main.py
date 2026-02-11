@@ -100,6 +100,25 @@ def CheckFiles(path, parent_folder):
             #file, check the checksum, replace if needed
             if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f):
                 print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                checksum_original = hashlib.new("md5")
+                checksum_git = hashlib.new("md5")
+                with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
+                    chunk = k.read(8192)
+                    while len(chunk) != 0:
+                        checksum_original.update(chunk)
+                        chunk = k.read(8192)
+                    
+                with open(path + f, "rb") as j:
+                    chunk = j.read(8192)
+                    while len(chunk) != 0:
+                        checksum_git.update(chunk)
+                        chunk = j.read(8192)
+
+                if checksum_original.hexdigest() != checksum_git.hexdigest():
+                    print("DIFFERENCE!")
+                    print(path+f)
+                    print("Checksums:\nOriginal:", checksum_original.hexdigest(), "\nGit:", checksum_git.hexdigest())
+                    shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
             else:
                 print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                 shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
