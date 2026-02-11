@@ -1,0 +1,16 @@
+{
+"TokenExpire":"43200",
+"RefreshDataFrequency":"2",
+"PageDisabledSite":"/page_disabled.html",
+"UserDisabledSite":"/user_disabled.html",
+"LoggingEnabled":"1",
+"LogFolder":"./logs/",
+"LogPrint":"0",
+"PluginDefaultState":"1",
+"NonExistentUserLogs":"0",
+"AutoDisable":"2",
+"APIEnabled":"1",
+"ServerPort":"80",
+"SystemUpdateFreq":"1",
+"SystemUpdateRepo":"https://github.com/Levvi07/Webmanager/tree/stable"
+}
