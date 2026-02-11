@@ -1,0 +1,58 @@
+#data_container{
+    width:70%;
+    border-right:3px solid blue;
+    text-wrap: wrap;
+    word-break: break-all;
+    margin-top: None;
+    padding: None;
+    font-size:120%;
+}
+
+input[type="submit"]{
+    font-size:170%;
+    width:20%;
+    padding:1%;
+    border:3px solid blue;
+    border-radius: 25px;
+    left:75%;
+    position: absolute;
+    color:white;
+    background-color: blue;
+    font-weight: bolder;
+    top:15%;
+}
+
+input[value="Disable"]{
+    top:30%;
+}
+
+input[value="Remove Plugin"]{
+    top:45%;
+}
+
+#conf_change_submit{
+    border:1px black solid;
+    left:1%;
+    margin-top:1%;
+    width:10% !important;
+    height:5.5%;
+    font-size:70%;
+    padding:none !important;
+    position:relative;
+}
+
+#valtext{
+    position: relative;
+    left:16%
+}
+
+#add_submit{
+    border:1px black solid;
+    left:1%;
+    margin-top:1%;
+    width:10% !important;
+    height:5.5%;
+    font-size:70%;
+    padding:none !important;
+    position:relative;
+}
