@@ -11,6 +11,6 @@
 "AutoDisable":"2",
 "APIEnabled":"1",
 "ServerPort":"80",
-"SystemUpdateFreq":"-6",
+"SystemUpdateFreq":"30",
 "SystemUpdateRepo":"https://github.com/Levvi07/Webmanager/tree/stable"
 }

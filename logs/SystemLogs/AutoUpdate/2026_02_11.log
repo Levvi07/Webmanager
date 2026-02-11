@@ -1,0 +1,4 @@
+11:27:16 [MESSAGE] SystemUpdateFreq is less than 1, Auto Update system is disabled
+11:32:29 [MESSAGE] SystemUpdateFreq is less than 1, Auto Update system is disabled
+11:36:11 [WARNING] SystemUpdateRepo MUST start with `https://github.com/` as only valid github repos are allowed. Auto Update system will NOT function!
+11:36:45 [MESSAGE] Auto Update system has started up!
