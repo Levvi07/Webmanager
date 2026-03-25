@@ -130,7 +130,7 @@ def CheckFiles(path, parent_folder):
                                 chunk_diff[chunks_or[i]] = chunks_git[i]
                         except:
                             print(len(chunks_git), "-----", len(chunks_or))
-
+                #ok so test test
                 #print("?????", str(chunk_diff).replace("b'", "\nb'"), "??????")
                 print(len(chunk_diff))
                 keys = list(chunk_diff)
