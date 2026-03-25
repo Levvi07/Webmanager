@@ -1,0 +1,44 @@
+input.text{
+    width:35%;
+    padding-top: 2%;
+    padding-bottom: 2%;
+    margin-left: 33%;
+    border:5px rgb(51, 63, 239) solid;
+    border-radius:30px;
+    font-size:24px;
+    padding-left:1%;
+    padding-right:1%;
+}
+
+#uname{
+    margin-top: 8%;
+    margin-bottom: 1%;;
+}
+
+#submit{
+    width:15%;
+    height: 8%;
+    font-size: 24px;
+    margin-left:43%;
+    margin-top:1%;
+    background-color: rgb(51, 63, 239);
+    color:white;
+    border:none;
+    border-radius: 25px;
+}
+
+#response{
+    width:33%;
+    margin-left: 33%;
+    margin-top:3%;
+    height:auto;
+    border-radius:25px;
+    text-align: center;
+    padding:1%;
+    padding-bottom: 4%;
+    text-wrap:wrap;
+    word-break: break-all;
+    font-size:24px;
+    font-weight: bold;
+    font-family: "Helvetica";
+}

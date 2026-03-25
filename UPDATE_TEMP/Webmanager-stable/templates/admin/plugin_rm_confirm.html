@@ -1,0 +1,20 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Confirm Removal</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+    </head>
+    <body>
+        <form action="/admin/removePlugin/" method="POST">
+            <p>Are you sure you want to remove NAME? (This process is not reversible)</p>
+            <input type="checkbox" required> I am sure <br>
+            <input type="submit" value="Remove">
+            <input type="text" name="name" value="NAME" style="display:none">
+            <input type="text" name="confirm" value="1" style="display:none">
+        </form>
+    </body>
+    
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>
