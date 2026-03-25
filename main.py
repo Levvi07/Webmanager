@@ -100,22 +100,25 @@ def CheckFiles(path, parent_folder):
             #file, check the checksum, replace if needed
             if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f ):
                 print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, " ;;;; ", path + f)
-                checksum_original = hashlib.new("md5")
-                checksum_git = hashlib.new("md5")
+                checksum_original = hashlib.new("sha256")
+                checksum_git = hashlib.new("sha256")
                 with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
                     # git adds random \r escape characters to code. Its annoying, but it causes detection errors
-                    chunk = k.read(8192).replace(b"\r", b"")
+                    chunk = k.read(8192).replace(b"\r\n", b"\n")
                     while len(chunk) != 0:
-                        checksum_original.update(chunk)
-                        chunk = k.read(8192).replace(b"\r", b"")
+                        if len(chunk) == 8192:
+                            checksum_original.update(chunk)
+                        chunk = k.read(8192).replace(b"\r\n", b"\n")
                     
                 with open(path + f, "rb") as j:
-                    chunk = j.read(8192)
+                    chunk = j.read(8192).replace(b"\r\n", b"\n")
                     while len(chunk) != 0:
-                        checksum_git.update(chunk)
-                        chunk = j.read(8192)
+                        if len(chunk) == 8192:
+                            checksum_git.update(chunk)
+                            print("Updated")
+                        chunk = j.read(8192).replace(b"\r\n", b"\n")
                 
-                if checksum_original.hexdigest() != checksum_git.hexdigest():
+                if checksum_original.digest() != checksum_git.digest():
                     print("DIFFERENCE!")
                     print(path+f)
                     print("Checksums:\nOriginal:", checksum_original.hexdigest(), "\nGit:", checksum_git.hexdigest())
@@ -166,7 +169,7 @@ def UpdateSystemFunc():
         shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/__pycache__')
     CheckFiles(f"./UPDATE_TEMP/{parent_folder}/", parent_folder)
 
-    shutil.rmtree("./UPDATE_TEMP")
+    #shutil.rmtree("./UPDATE_TEMP")
         
 
 # This one just times it
