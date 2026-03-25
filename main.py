@@ -107,7 +107,7 @@ def CheckFiles(path, parent_folder):
                     chunk = k.read(8192).replace(b"\r", b"")
                     while len(chunk) != 0:
                         checksum_original.update(chunk)
-                        chunk = k.read(8192)
+                        chunk = k.read(8192).replace(b"\r", b"")
                     
                 with open(path + f, "rb") as j:
                     chunk = j.read(8192)
