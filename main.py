@@ -98,12 +98,13 @@ def CheckFiles(path, parent_folder):
     for f in os.listdir(path):
         if os.path.isfile(path + f):
             #file, check the checksum, replace if needed
-            if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f):
-                print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+            if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f ):
+                print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, " ;;;; ", path + f)
                 checksum_original = hashlib.new("md5")
                 checksum_git = hashlib.new("md5")
                 with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
-                    chunk = k.read(8192)
+                    # git adds random \r escape characters to code. Its annoying, but it causes detection errors
+                    chunk = k.read(8192).replace(b"\r", b"")
                     while len(chunk) != 0:
                         checksum_original.update(chunk)
                         chunk = k.read(8192)
@@ -113,19 +114,20 @@ def CheckFiles(path, parent_folder):
                     while len(chunk) != 0:
                         checksum_git.update(chunk)
                         chunk = j.read(8192)
-
+                
                 if checksum_original.hexdigest() != checksum_git.hexdigest():
                     print("DIFFERENCE!")
                     print(path+f)
                     print("Checksums:\nOriginal:", checksum_original.hexdigest(), "\nGit:", checksum_git.hexdigest())
-                    shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                    #shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
             else:
                 print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                 shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
         else:
             #dir, recursive stuff, call checkfiles again
             #we'll handle the data folder separately, its complicated
-            if f != "data":
+            # We also wont check the Update_temp folder
+            if f != "data" and f != "UPDATE_TEMP":
                 CheckFiles(path + f + "/", parent_folder)
             else:
                 pass
@@ -153,6 +155,9 @@ def UpdateSystemFunc():
     os.remove(f'./UPDATE_TEMP/{repo.split("/")[-1]}.zip')
     if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/logs'):
         shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/logs')
+        
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/static'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/static')
 
     if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/plugins'):
         shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/plugins')
@@ -160,6 +165,8 @@ def UpdateSystemFunc():
     if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/__pycache__'):
         shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/__pycache__')
     CheckFiles(f"./UPDATE_TEMP/{parent_folder}/", parent_folder)
+
+    shutil.rmtree("./UPDATE_TEMP")
         
 
 # This one just times it
