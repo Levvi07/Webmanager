@@ -106,16 +106,13 @@ def CheckFiles(path, parent_folder):
                     # git adds random \r escape characters to code. Its annoying, but it causes detection errors
                     chunk = k.read(8192).replace(b"\r\n", b"\n")
                     while len(chunk) != 0:
-                        if len(chunk) == 8192:
-                            checksum_original.update(chunk)
+                        checksum_original.update(chunk)
                         chunk = k.read(8192).replace(b"\r\n", b"\n")
                     
                 with open(path + f, "rb") as j:
                     chunk = j.read(8192).replace(b"\r\n", b"\n")
                     while len(chunk) != 0:
-                        if len(chunk) == 8192:
-                            checksum_git.update(chunk)
-                            print("Updated")
+                        checksum_git.update(chunk)
                         chunk = j.read(8192).replace(b"\r\n", b"\n")
                 
                 if checksum_original.digest() != checksum_git.digest():
