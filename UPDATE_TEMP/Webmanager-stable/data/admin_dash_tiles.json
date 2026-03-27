@@ -1,0 +1,7 @@
+{
+"Default":[[1, "Add User", "./admin/addUser.html"], [3, "Site Perms", "./admin/site_perms.html"], [2, "User list", "./admin/users.html"]],
+"1":[[2, "Add User", "./admin/addUser.html"], [3, "Site Perms", "./admin/site_perms.html"], [1, "User list", "./admin/users.html"], [4, "plugin manager", "./admin/plugin_manager"]],
+"3":[[1, "Add User", "./admin/addUser.html"], [3, "Site Perms", "./admin/site_perms.html"], [2, "User list", "./admin/users.html"], [4, "plugin manager", "./admin/plugin_manager"]],
+"5":[[1, "Add User", "./admin/addUser.html"], [3, "Site Perms", "./admin/site_perms.html"], [2, "User list", "./admin/users.html"]],
+"2":[[1, "Add User", "./admin/addUser.html"], [3, "Site Perms", "./admin/site_perms.html"], [2, "User list", "./admin/users.html"]]
+}
