@@ -1,0 +1,2005 @@
+from flask import Flask
+import os, json
+from flask import send_from_directory, request, make_response
+import handle_users, csv, hashlib
+import data_reader as dr
+import importlib, time
+from LLogger import *
+import shutil
+import api
+import threading
+import requests
+import zipfile
+import math
+
+dr.init()
+def create_app():
+    app = Flask(__name__)
+    return app
+
+CreateLog(text="The app has started up!", severity=0, category="SystemLogs/Startup")
+
+#function for loading/reloading plugins
+pluginlist = []
+Imported_plugins = {}
+pluginerrors = {}
+def reload_plugins():
+    global Imported_plugins
+    dr.add_plugin_config("RESET")
+    Imported_plugins = {}
+    #getting all the plugins
+    pluginlist = os.listdir("./plugins")
+    if "__init__.py" in pluginlist:
+        pluginlist.pop(pluginlist.index("__init__.py"))
+    if "__pycache__" in pluginlist:
+        pluginlist.pop(pluginlist.index("__pycache__"))
+    #defined here so we dont redefine the same thing every time
+    enabled_data = dr.plugin_enabled_data
+    #make an enabled pairing
+    enabled_pair = {}
+    for i in range(len(enabled_data)-1):
+        enabled_pair[enabled_data[i+1][0]] = enabled_data[i+1][1]
+
+    #initialising all the __plugin_init__.py files (this is the standard file containing the page functions and all that)
+    for name in pluginlist:
+        try:
+            if name not in enabled_pair.keys():
+                CreateLog(name + " was not found in enabled list, added it", 0, "SystemLogs/Plugins/Enables")
+                #not yet in enabled csv, put it in there, default set by configs
+                try:
+                    status = int(dr.site_config_data["PluginDefaultState"])
+                except:
+                    CreateLog(text="PluginDefaultState must be a number", severity=2, category="SystemLogs/Configs")
+                    status = 0
+                enabled_pair[name] = status
+                new_enabled_data = enabled_data
+                new_enabled_data.append([name, status])
+                f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
+                writer = csv.writer(f)
+                for row in new_enabled_data:
+                    writer.writerow(row)
+                f.close()
+            Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
+            if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
+                CreateLog(text=f"Wont import module {name} because 'name' field is empty (See PluginData class)", severity=2, category="SystemLogs/Plugins/Init")
+                pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
+                Imported_plugins.pop(name)
+            if int(enabled_pair[name]) != 1:
+                CreateLog(text=f"Wont import module {name} because its disabled", severity=2, category="SystemLogs/Plugins/Init")
+                Imported_plugins.pop(name)
+        except AttributeError:
+            CreateLog(text=f"Cant initalise module '{name}' because PluginData class is not present or some data is missing", severity=2, category="SystemLogs/Plugins/Init")
+            pluginerrors[name] = "PluginData class is not present or some data is missing"
+        except ModuleNotFoundError:
+            CreateLog(text=f"Cant initalise module '{name}' because __plugin_init__.py is not present", severity=2, category="SystemLogs/Plugins/Init")
+            pluginerrors[name] = f"Cant initalise module, because __plugin_init__.py is not present"
+        except Exception as e:
+            CreateLog(text=f"Miscellanous error:{e}", severity=2, category="SystemLogs/Plugins/Init")
+            pluginerrors[name] = e
+                
+                
+    #importing plugin configs
+    for name in Imported_plugins.keys():
+        if os.path.exists(f"./plugins/{name}/__plugin_configs__.json"):
+            #import configs
+            f = open(f"./plugins/{name}/__plugin_configs__.json", "r")
+            dr.add_plugin_config(json.loads(f.read()))
+            f.close()
+        else:
+            CreateLog(text=f"global plugin configs for {name} dont exist", severity=1, category="SystemLogs/Plugins/Init")
+    CreateLog("All plugins have been reloaded", 0, "SystemLogs/Plugins/Reload")
+#loading plugins before execution
+reload_plugins()
+#pass to API so it can reload too
+api.reload_plugins_func = reload_plugins
+
+# Auto Update System
+# This one actually does the updating 
+def CheckFiles(path, parent_folder):
+    for f in os.listdir(path):
+        if os.path.isfile(path + f):
+            #file, check the checksum, replace if needed
+            if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f ):
+                print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, " ;;;; ", path + f)
+                checksum_original = hashlib.new("sha256")
+                checksum_git = hashlib.new("sha256")
+
+                k_file = open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb")
+                k = k_file.read()
+                if k.endswith(b"\n"):
+                    print("TEMP HAS TRAILING!!!!!!!!!!!!!!!!!!")
+                    k = k[:-1]
+                k = k.replace(b"\r\n", b"\n")
+
+                j_file = open(path + f, "rb")
+                j = j_file.read()
+                if j.endswith(b"\n"):
+                    print("ORIGINAL HAS TRAILING!!!!!!!!!!!!!!!!!!")
+                    j = j[:-1]
+                j = j.replace(b"\r\n", b"\n")
+
+                print("---------------------------")
+                print(len(k))
+                print(len(j))
+                print("---------------------------")
+                k_chunks = []
+                j_chunks = []
+
+                for l in range(math.ceil(len(k)/512)):
+                    try:
+                        k_chunks.append(k[l*512:(l+1)*512])
+                    except IndexError:
+                        k_chunks.append(k[l*512:])
+                
+                for o in range(math.ceil(len(j)/512)):
+                    try:
+                        j_chunks.append(j[o*512:(o+1)*512])
+                    except IndexError:
+                        j_chunks.append(j[o*512:])
+                
+                
+                for chunk in k_chunks:
+                    checksum_git.update(chunk)
+                
+                for chunk in j_chunks:
+                    checksum_original.update(chunk)
+
+                '''
+                with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
+                    # git adds random \r escape characters to code. Its annoying, but it causes detection errors
+                    chunk = k.read(8192).replace(b"\r\n", b"\n")
+                    while len(chunk) != 0:
+                        checksum_original.update(chunk)
+                        chunk = k.read(8192).replace(b"\r\n", b"\n")
+                    
+                with open(path + f, "rb") as j:
+                    chunk = j.read(8192).replace(b"\r\n", b"\n")
+                    while len(chunk) != 0:
+                        checksum_git.update(chunk)
+                        chunk = j.read(8192).replace(b"\r\n", b"\n")
+                '''
+                if checksum_original.digest() != checksum_git.digest():
+                    print("DIFFERENCE!")
+                    print(path+f)
+                    print("Checksums:\nOriginal:", checksum_original.hexdigest(), "\nGit:", checksum_git.hexdigest())
+                    #shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+            else:
+                print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+        else:
+            #dir, recursive stuff, call checkfiles again
+            #we'll handle the data folder separately, its complicated
+            # We also wont check the Update_temp folder
+            if f != "data" and f != "UPDATE_TEMP":
+                CheckFiles(path + f + "/", parent_folder)
+            else:
+                pass
+
+def UpdateSystemFunc():
+    repo = dr.site_config_data["SystemUpdateRepo"]
+    if repo[-1] == "/":
+        repo = repo[:-1]
+    if "tree" not in repo:
+        repo += "tree/stable"
+    repo = repo.replace("https://github.com/", "")
+    
+    zip_url = "https://github.com/" + repo.split("/")[0] + "/" + repo.split("/")[1] + "/archive/refs/heads/" + repo.split("/")[-1] + ".zip"
+    
+    r = requests.get(zip_url, allow_redirects=True)
+    if not os.path.exists("./UPDATE_TEMP/"):
+        os.mkdir("./UPDATE_TEMP/")
+    open('./UPDATE_TEMP/' + repo.split("/")[-1] + ".zip", 'wb').write(r.content)
+
+    with zipfile.ZipFile('./UPDATE_TEMP/' + repo.split("/")[-1] + ".zip", 'r') as zip_ref:
+        zip_ref.extractall('./UPDATE_TEMP/')
+
+    # removing the zip file, as its not needed anymore, also the logs and plugins folder as they wont be changed
+    parent_folder = f'{repo.split("/")[1]}-{repo.split("/")[-1]}'
+    os.remove(f'./UPDATE_TEMP/{repo.split("/")[-1]}.zip')
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/logs'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/logs')
+        
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/static'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/static')
+
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/plugins'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/plugins')
+
+    if os.path.exists(f'./UPDATE_TEMP/{parent_folder}/__pycache__'):
+        shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/__pycache__')
+    CheckFiles(f"./UPDATE_TEMP/{parent_folder}/", parent_folder)
+
+    #shutil.rmtree("./UPDATE_TEMP")
+        
+
+# This one just times it
+def UpdateSystemTimer():
+    #see if Freq is correct
+    try:
+        freq = dr.site_config_data["SystemUpdateFreq"]
+        freq = int(freq)
+        if freq < 1:
+            raise Exception("Disabled")
+    except Exception as e:
+        if str(e) == "Disabled":
+            CreateLog(text="SystemUpdateFreq is less than 1, Auto Update system is disabled", severity=0, category="SystemLogs/AutoUpdate")
+        else:
+            CreateLog(text="SystemUpdateFreq is not present, or is not an integer. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
+        return
+    
+    #check if the github page is valid af
+    #https://github.com/Levvi07/Webmanager/tree/stable
+    repo = dr.site_config_data["SystemUpdateRepo"]
+    if type(repo) != str:
+        CreateLog(text="SystemUpdateRepo MUST be a string. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
+        return
+    
+    if not repo.startswith("https://github.com/"):
+        CreateLog(text="SystemUpdateRepo MUST start with `https://github.com/` as only valid github repos are allowed. Auto Update system will NOT function!", severity=1, category="SystemLogs/AutoUpdate")
+        return
+    
+    CreateLog(text="Auto Update system has started up!", severity=0, category="SystemLogs/AutoUpdate")
+    while 1:
+        UpdateSystemFunc()
+        time.sleep(freq*60)
+
+UpdateThread = threading.Thread(target=UpdateSystemTimer)
+UpdateThread.start()
+
+def serve_html_website(route):
+    if not os.path.exists("./templates/" + route):
+        return "", {"Refresh": "0; url=/404.html"}
+    if route[-1] != "/" and os.path.isdir("./templates/" + route):
+        return "", {"Refresh": "0; url=/404.html"}
+    f = open("./templates/" + route)
+    return f.read()
+
+app = create_app()
+
+#handle favicon
+@app.route('/favicon.ico')
+def favicon():
+    perm_code = handle_users.check_site_perm('/favicon.ico', request.cookies.get("token"))
+    if perm_code == "200":
+        return send_from_directory(os.path.join(app.root_path, 'static'),
+                            'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+#handle index.html
+@app.route("/")
+def index():
+    perm_code = handle_users.check_site_perm('/index.html', request.cookies.get("token"))
+    if perm_code == "200":
+        return serve_html_website("index.html")    
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+#handle signout
+@app.route("/signout.html")
+def signout():
+    perm_code = handle_users.check_site_perm('/signout.html', request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    token = request.cookies.get("token")
+    if token == None:
+        return "Token is not set, you have to log in first! Redirecting...", {"Refresh": "2; url=./login.html"}
+    signout_response = handle_users.record_token(token.split("|")[0],token, 1)
+    if signout_response == "400 Bad Request; Non-existent token":
+        resp = make_response("Non-existent Token! Redirecting...")
+    else:
+        resp = make_response("Signed out successfully! Redirecting...")
+        resp.set_cookie("token", "", max_age=0)
+    
+    CreateLog(text=f"{token.split('|')[1]} has logged out!", severity=0, category=f"/Users/{token.split('|')[1]}")
+    return resp, {"Refresh": "2; url=./login.html"}
+#handle css
+@app.route("/css/<path:p>")
+def css(p):
+    perm_code = handle_users.check_site_perm("/css/"+p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    if not os.path.exists("./css/"+p):
+        return "No such file"
+    f = open("./css/"+p)
+    return f.read()
+
+#handle js
+@app.route("/js/<path:p>")
+def js(p):
+    perm_code = handle_users.check_site_perm("/js/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    if not os.path.exists("./js/"+p):
+        return "alert('Missing JS file:" + p + "')"
+    f = open("./js/"+p)
+    return f.read()
+
+#handle login_post
+@app.route("/login.html", methods=['POST'])
+def handle_login():
+    perm_code = handle_users.check_site_perm("/login.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    CookieToken = request.cookies.get("token")
+    font_color, bg_color, response, token = handle_users.login(request.form)
+    resp = make_response(serve_html_website("login.html").replace('<div id="response">', '<div id="response" style="background-color:' + bg_color+ ';color:' + font_color+ '">' + response))
+    if token != 0:
+        #If already signed in, sign that profile out before changing
+        if CookieToken != None:
+            if CookieToken.split("|")[0] != token.split("|")[0]:
+                dr.refresh_tokens_data()
+                handle_users.record_token(CookieToken.split("|")[0], CookieToken, 1)
+        resp.set_cookie(key="token", value=str(token), expires=int(dr.site_config_data["TokenExpire"]), max_age=int(dr.site_config_data["TokenExpire"]))
+        CreateLog(text=f"{token.split('|')[1]} has logged in from {request.remote_addr} !", severity=0, category=f"/Users/{token.split('|')[1]}")
+        #reset unsuccesful login attempts if needed
+        new_ad_data = dr.auto_disable_data
+        #increase the number of wrong attempts
+        new_ad_data[request.form["username"]] = "0"
+
+        jsonobj = "{\n"
+        clen = len(new_ad_data)
+        keys = list(new_ad_data)
+        for i in range(clen):
+            jsonobj += f"\"{keys[i]}\":\"{new_ad_data[keys[i]]}\""
+            if i != clen - 1:
+                jsonobj += ",\n"
+            else:
+                jsonobj += "\n}"    
+        f = open("./data/auto_disable.json", "w")
+        f.write(jsonobj)
+        f.close()
+        return resp, {"Refresh": "0; url=/"}
+    #Check if the name even exists, otherwise dont make log, as to not create junk logs (we dont like that)
+    # Only Comes with a data leak (possible enumeration of usernames) if access to logs is granted
+    # Its toggleable in the config
+    MakeLog = 1
+    if dr.site_config_data["NonExistentUserLogs"] == "0":
+        names = []
+        for i in range(len(dr.users_data)-1):
+            names.append(dr.users_data[i+1][1])
+        if request.form["username"] not in names:
+            MakeLog = 0
+    if MakeLog:
+        CreateLog(text=f"Unsuccesful login attempt by `{request.form['username']}` with password `{request.form['password']}` from {request.remote_addr}!", severity=1, category=f"/Users/{request.form['username']}")
+        new_ad_data = dr.auto_disable_data
+        #increase the number of wrong attempts
+        if request.form["username"] in new_ad_data.keys():
+            new_ad_data[request.form["username"]] = str(int(new_ad_data[request.form["username"]]) + 1)
+        else:
+            new_ad_data[request.form["username"]] = "1"
+
+        jsonobj = "{\n"
+        clen = len(new_ad_data)
+        keys = list(new_ad_data)
+        for i in range(clen):
+            jsonobj += f"\"{keys[i]}\":\"{new_ad_data[keys[i]]}\""
+            if i != clen - 1:
+                jsonobj += ",\n"
+            else:
+                jsonobj += "\n}"    
+        f = open("./data/auto_disable.json", "w")
+        f.write(jsonobj)
+        f.close()
+
+        try:
+            attempt_limit = int(dr.site_config_data["AutoDisable"])
+        except:
+            attempt_limit = 0
+            CreateLog("AutoDisable must be a number", 2, "SystemLogs/Configs")
+        if int(new_ad_data[request.form["username"]]) >= attempt_limit:
+            CreateLog(f"User `{request.form['username']}` got disabled by Auto Disable system", 1, f"Users/{request.form['username']}")
+            CreateLog(f"User `{request.form['username']}` got disabled by Auto Disable system", 1, f"SystemLogs/AutoDisable")
+            #disabling user
+            role_id = 0
+            for i in range(len(dr.roles_data)-1):
+                if dr.roles_data[i+1][2] == "Disabled":
+                    role_id=i+1
+
+            user_id = 0
+            for i in range(len(dr.users_data)-1):
+                if dr.users_data[i+1][1] == request.form["username"]:
+                    user_id = i+1
+
+            new_user_perms = dr.user_perm_data
+            if role_id not in new_user_perms[user_id][1].split(";"):
+                new_user_perms[user_id][1] = new_user_perms[user_id][1] + f";{str(role_id)}"
+
+            f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_perms:
+                writer.writerow(row)
+            f.close()
+    return resp
+
+#handle Adduser
+@app.route("/admin/addUser.html", methods=["GET","POST"])
+def AddUser():
+    perm_code = handle_users.check_site_perm("/admin/addUser.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    #handle post
+    bg_color = "#FFFFFF"
+    font_color = "#FFFFFF"
+    response = ""
+    if request.method == "POST":
+        font_color, bg_color, response = handle_users.AddUser(request.form)
+    role_options = ""
+    group_options = ""
+    for i in range(len(dr.roles_data)-1):
+        role_options += f"<option value='{str(dr.roles_data[i+1][0])}'>{dr.roles_data[i+1][2]}</option>"
+    for i in range(len(dr.groups_data)-1):
+        group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>"
+
+    if bg_color == "#62cc31":
+        if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+        else:
+            admin_name = "NOT_LOGGED_IN"
+        CreateLog(text=f"user `{request.form['username']}` has been added by admin `{admin_name}`!", severity=0, category="SystemLogs/Users")
+
+    return serve_html_website("/admin/addUser.html").replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options).replace("RESPONSE", response).replace("FONTCOLOR", font_color).replace("BG_COLOR", bg_color)
+
+@app.route("/admin/remove_user", methods=["POST"]) 
+def remove_user():
+    perm_code = handle_users.check_site_perm("/admin/remove_user.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "401", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    id = request.json["userId"]
+    log_username = ""
+    for i in range(len(dr.users_data)-1):
+        if int(dr.users_data[i+1][0]) == int(id):
+            log_username = dr.users_data[i+1][1]
+
+    if "|" in request.cookies.get("token"):
+        admin_name = request.cookies.get("token").split("|")[1]
+    else:
+        admin_name = "NOT_LOGGED_IN"
+    CreateLog(text=f"user `{log_username}` has been removed by admin `{admin_name}`!", severity=0, category="SystemLogs/Users")
+    handle_users.remove_user(int(id))
+    return ""
+
+@app.route("/admin/users.html")
+def users():
+    perm_code = handle_users.check_site_perm("/admin/users.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    users = ""
+    for i in range(len(dr.users_data)-1):
+        id = dr.users_data[i+1][0]
+        users += f"<tr><td class='id_td'>{id}</td><td class='name_td'>{dr.users_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modifyUser/{id}'>Modify</a></td><td class='del_td'><button onclick='delete_user({id},\"{dr.users_data[i+1][1]}\")'>Delete User</button></td></tr>"
+    return serve_html_website("/admin/users.html").replace("USERS", users)    
+
+#Handle user pages
+@app.route("/user/<path:p>", methods=["GET","POST"])
+def user_page(p):
+    alert = ""
+    perm_code = handle_users.check_site_perm("/user/"+p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    id = int(p)
+    #update data if its possible
+    if request.method == "POST":
+        alert = "Data Changed, Logging out"
+        #get data type set by form variable
+        rtype = request.form["rtype"]
+        if rtype == "uname":
+            username = request.form["username"]
+            email = request.form["email"]
+            full_name = request.form["full_name"]
+            description = request.form["description"]
+            new_users_data = dr.users_data
+            if username != dr.users_data[id][1]:
+                #username changed
+                usernames = []
+                for i in range(len(dr.users_data)-1):
+                    usernames.append(dr.users_data[i+1][1])
+                if username not in usernames:
+                    new_users_data[id][1] = username
+                else:
+                    #insert alert message if the name is already in use
+                    alert = "Username already in use!"
+            if email != dr.users_data[id][2]:
+                new_users_data[id][2] = email
+            if full_name != dr.users_data[id][3]:
+                new_users_data[id][3] = full_name
+            if description != dr.users_data[id][4]:
+                new_users_data[id][4] = description
+            f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_users_data:
+                writer.writerow(row)
+            f.close()
+            CreateLog(text=f"The user data for user {username} has changed!", severity=1, category=f"Users/{username}")
+        elif rtype == "pwd":
+            new_hash_data = dr.hash_data
+            c_pass = request.form["current_pass"]
+            pass1 = request.form["password1"]
+            pass2 = request.form["password2"]
+            if hashlib.md5(bytes(c_pass, "UTF-8")).hexdigest() != dr.hash_data[id][1]:
+                alert = "Current Password is Invalid!"
+            else:
+                if pass1 != pass2:
+                    alert = "Passwords do not match!"
+                else:
+                    new_hash_data[id][1] = hashlib.md5(bytes(pass1, "UTF-8")).hexdigest()
+                    alert = "Data Changed, Logging out"
+                    username = ""
+                    for i in range(len(dr.users_data)-1):
+                        if int(dr.users_data[i+1][0]) == int(id):
+                            username = dr.users_data[i+1][1]
+                            break
+                    CreateLog(text=f"The password for user {username} has changed!", severity=1, category=f"Users/{username}")
+            f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_hash_data:
+                writer.writerow(row)
+            f.close()
+    username = dr.users_data[id][1]
+    email = dr.users_data[id][2]
+    full_name = dr.users_data[id][3]
+    description = dr.users_data[id][4]
+    ret = serve_html_website("/user/index.html").replace("#DESCRIPTION#", description).replace("#EMAIL#", email).replace("#USERNAME#", username).replace("#FULL_NAME#", full_name)
+    if alert != "":
+        ret += "<script>alert('"+ alert +"')</script>"
+    if alert == "Data Changed, Logging out":
+        return "Data Changed, Logging out!", {"Refresh":"2; url=/signout.html"}
+    else:
+        return ret
+
+#Handle admin user modify
+@app.route("/admin/modifyUser/<path:p>", methods=["GET","POST"])
+def admin_user_page(p):
+    alert = ""
+    perm_code = handle_users.check_site_perm("/admin/modifyUser/"+p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    id = int(p)
+    #update data if its possible
+    if request.method == "POST":
+        alert = ""
+        #get data type set by form variable
+        rtype = request.form["rtype"]
+        if rtype == "uname":
+            username = request.form["username"]
+            email = request.form["email"]
+            full_name = request.form["full_name"]
+            description = request.form["description"]
+            new_users_data = dr.users_data
+            if username != dr.users_data[id][1]:
+                #username changed
+                usernames = []
+                for i in range(len(dr.users_data)-1):
+                    usernames.append(dr.users_data[i+1][1])
+                if username not in usernames:
+                    new_users_data[id][1] = username
+                else:
+                    #insert alert message if the name is still in use
+                    alert = "Username already in use!"
+            if email != dr.users_data[id][2]:
+                new_users_data[id][2] = email
+            if full_name != dr.users_data[id][3]:
+                new_users_data[id][3] = full_name
+            if description != dr.users_data[id][4]:
+                new_users_data[id][4] = description
+            f = open("./data/users.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_users_data:
+                writer.writerow(row)
+            f.close()
+            
+            if "|" in request.cookies.get("token"):
+                admin_name = request.cookies.get("token").split("|")[1]
+            else:
+                admin_name = "NOT_LOGGED_IN"
+            CreateLog(text=f"The user data for user {username} has been changed by admin `{admin_name}`", severity=1, category=f"Users/{username}")
+        elif rtype == "pwd":
+            new_hash_data = dr.hash_data
+            pass1 = request.form["password1"]
+            pass2 = request.form["password2"]
+            if pass1 != pass2:
+                    alert = "Passwords do not match!"
+            else:
+                    new_hash_data[id][1] = hashlib.md5(bytes(pass1, "UTF-8")).hexdigest()
+                    alert = "Data Changed, Logging out"
+                    username = ""
+                    for i in range(len(dr.users_data)-1):
+                        if int(dr.users_data[i+1][0]) == int(id):
+                            username = dr.users_data[i+1][1]
+                            break
+                    
+                    if "|" in request.cookies.get("token"):
+                        admin_name = request.cookies.get("token").split("|")[1]
+                    else:
+                        admin_name = "NOT_LOGGED_IN"
+                    CreateLog(text=f"The password for user {username} has been changed by admin `{admin_name}`!", severity=1, category=f"Users/{username}")
+            f = open("./data/pwd_hashes.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_hash_data:
+                writer.writerow(row)
+            f.close()
+        elif rtype == "roles":
+            ids = request.form["roles_post"]
+            new_user_perms = dr.user_perm_data
+            new_user_perms[id][1] = ids[:-1]
+            f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_perms:
+                writer.writerow(row)
+            f.close()
+        elif rtype == "groups":
+            ids = request.form["groups_post"]
+            new_user_perms = dr.user_perm_data
+            new_user_perms[id][2] = ids[:-1]
+            f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_perms:
+                writer.writerow(row)
+            f.close()    
+        elif rtype == "API":
+            API_level = request.form["API_select"]
+            new_user_perms = dr.user_perm_data
+            new_user_perms[id][3] = API_level
+            f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+            writer = csv.writer(f)
+            for row in new_user_perms:
+                writer.writerow(row)
+            f.close()    
+
+    try:
+        username = dr.users_data[id][1]
+    except IndexError:
+        return "", {"Refresh": "0; url=/404.html"}
+    email = dr.users_data[id][2]
+    full_name = dr.users_data[id][3]
+    description = dr.users_data[id][4]
+    role_options = ""
+    group_options = ""
+    API_options = "<option value='-1'>No Access</option>\n<option value='0'>Read</option>\n<option value='1'>Write</option>"
+    #determine API level
+    api_level = dr.user_perm_data[id][3]
+    if str(api_level) == "0":
+        API_options = API_options.replace(">Read", "selected>Read")
+    elif str(api_level) == "1":
+        API_options = API_options.replace(">Write", "selected>Write")
+    else:
+        API_options = API_options.replace(">No", "selected>No")
+
+    for i in range(len(dr.roles_data)-1):
+        role_options += f"<option value='{str(dr.roles_data[i+1][0])}'>{dr.roles_data[i+1][2]}</option>"
+    for i in range(len(dr.groups_data)-1):
+        group_options += f"<option value='{str(dr.groups_data[i+1][0])}'>{dr.groups_data[i+1][2]}</option>"
+
+    
+    ret = serve_html_website("/admin/modifyUser.html").replace("#DESCRIPTION#", description).replace("#EMAIL#", email).replace("#USERNAME#", username).replace("#FULL_NAME#", full_name).replace("ROLE_OPTIONS", role_options).replace("GROUP_OPTIONS", group_options).replace("#API_ACCESS#", API_options)
+    if alert != "":
+        ret += "<script>alert('"+ alert +"')</script>"
+    #get roles and groups of user, inject them trough js
+    user_roles = dr.user_perm_data[id][1].split(";")
+    user_groups = dr.user_perm_data[id][2].split(";")
+    ret += "<script>"
+    for role_id in user_roles:
+        if role_id != "":
+            ret += f"addRoleManually({role_id});"
+    for group_id in user_groups:
+        if group_id != "":
+            ret += f"addGroupManually({group_id});"        
+    ret += "</script>"        
+    return ret
+    
+#role manager
+@app.route("/admin/role_manager.html")
+def role_manager():
+    perm_code = handle_users.check_site_perm("/admin/role_manager.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
+    role_lines = ""
+    for i in range(len(dr.roles_data)-1):
+        row = dr.roles_data[i+1]
+        role_lines += f'<tr><td id="ID" name="r{str(row[0])}_id">{str(row[0])}</td><td id="role_name"><input type="text" value="{row[2]}" name="r{str(row[0])}_name"></td><td id="role_desc"><input type="text" value="{row[3]}" name="r{str(row[0])}_desc"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}" name="r{str(row[0])}_perm"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteRole/{row[0]}\'" type="button">Delete</button></td></tr>'
+
+    return serve_html_website("/admin/role_manager.html").replace("ROLES", role_lines)
+
+@app.route("/admin/deleteRole/<path:id>")
+def deleteRole(id):
+    perm_code = handle_users.check_site_perm("/admin/deleteRole/" + str(id), request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    #for logs
+    role_name = dr.roles_data[int(id)][2]
+    #delete role
+    new_role_data = dr.roles_data
+    new_role_data.pop(int(id))
+
+    #delete role from users who have it
+    new_user_data = dr.user_perm_data
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        if id in new_user_data[i+1][1].split(";"):
+            roles = new_user_data[i+1][1].split(";")
+            roles.pop(roles.index(id))
+            new_user_data[i+1][1] = roles
+
+    #record the old, and new indexes of roles, so we can reassign roles for users later (to avoid a role's id shifting)
+    index_pairs = {}
+    #reindex existing roles
+    ind = 1
+    for i in range(len(new_role_data)-1):
+        index_pairs[new_role_data[i+1][0]] = ind
+        new_role_data[i+1][0] = ind
+        ind += 1
+
+
+    #replace user perm role indexes with new ones
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        roles = new_user_data[i+1][1]
+        if type(roles) != list:
+            roles = roles.split(";")
+        new_roles = ""
+        for r in roles:
+            new_roles += str(index_pairs[r]) + ";"
+        new_roles = new_roles[:-1]
+        new_user_data[i+1][1] = new_roles    
+
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_user_data:
+        writer.writerow(row)
+    f.close()
+
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_role_data:
+        writer.writerow(row)
+    f.close()            
+
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+
+
+    CreateLog(f"Role `{role_name}` has been deleted by admin `{admin_name}`!", 1, category="SystemLogs/Roles_Groups")
+    return "Refreshing!", {"Refresh": "5; url=/admin/role_manager.html"}
+
+@app.route("/admin/changeRoles", methods=["POST"])
+def changeRoles():
+    perm_code = handle_users.check_site_perm("/admin/changeRoles", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    form = request.form
+    n_of_errors = 0
+    existing_role_names = []
+    errors = ""
+    new_roles = dr.roles_data
+
+    for s in form:
+        id = int(s.split("_")[0].replace("r", ""))
+        rtype = s.split("_")[1]
+        if rtype == "desc":
+            new_roles[id][3] = form[s]
+        if rtype == "perm":
+            new_roles[id][1] = form[s]
+        if rtype == "name":
+            existing_role_names.append(form[s])
+            if form[s] in existing_role_names:
+                if existing_role_names.count(form[s]) == 1:
+                    new_roles[id][2] = form[s]
+                else:
+                    n_of_errors += 1
+                    errors += "Name Already Taken: " + form[s] + "<br>"
+            else:
+                new_roles[id][2] = form[s]
+
+
+    if n_of_errors == 0:
+        f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in new_roles:
+            writer.writerow(row)
+        f.close()
+        if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+        else:
+            admin_name = "NOT_LOGGED_IN"
+        CreateLog(f"Admin `{admin_name}` modified some roles!", 1, category="SystemLogs/Roles_Groups")
+        return "No Errors! Changes saved successfully!, redirecting in 4 seconds...", {"Refresh":"4;url=/admin/role_manager.html"}
+    elif n_of_errors <= 3:
+        return errors + "3 or less errors, redirecting in 10 seconds...", {"Refresh":"10;url=/admin/role_manager.html"}
+    else:
+        return errors + "more than 3 errors, no redirection <br> <a href='/admin/role_manager.html'>Go Back To Role Manager Page</a>"    
+
+#group manager
+@app.route("/admin/group_manager.html")
+def group_manager():
+    perm_code = handle_users.check_site_perm("/admin/group_manager.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    #<tr><td id="ID">1</td><td id="role_name"><input type="text"></td><td id="role_desc"><input type="text"></td><td id="perm_level"><input class="perm_lvl_field" type="number"></td><td id="del_btn"><button onclick="delete_role(1)">Delete</button></td></tr>    
+    group_lines = ""
+    for i in range(len(dr.groups_data)-1):
+        row = dr.groups_data[i+1]
+        group_lines += f'<tr><td id="ID" name="r{str(row[0])}_id">{str(row[0])}</td><td id="group_name"><input type="text" value="{row[2]}" name="r{str(row[0])}_name"></td><td id="group_desc"><input type="text" value="{row[3]}" name="r{str(row[0])}_desc"></td><td id="perm_level"><input class="perm_lvl_field" type="number" value="{row[1]}" name="r{str(row[0])}_perm"></td><td id="del_btn"><button onclick="location.href=\'/admin/deleteGroup/{row[0]}\'" type="button">Delete</button></td></tr>'
+
+    return serve_html_website("/admin/group_manager.html").replace("GROUPS", group_lines)
+
+#delete group
+@app.route("/admin/deleteGroup/<path:id>")
+def deleteGroup(id):
+    perm_code = handle_users.check_site_perm("/admin/deleteGroup/" + str(id), request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    #for logs
+    group_name = dr.groups_data[int(id)][2]
+
+    #delete group
+    new_group_data = dr.groups_data
+    new_group_data.pop(int(id))
+
+    #delete group from users who have it
+    new_user_data = dr.user_perm_data
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        if id in new_user_data[i+1][2].split(";"):
+            groups = new_user_data[i+1][2].split(";")
+            groups.pop(groups.index(id))
+            new_user_data[i+1][2] = groups
+
+    #record the old, and new indexes of roles, so we can reassing roles for users later (to avoid a role's id shifting)
+    index_pairs = {}
+    #reindex existing roles
+    ind = 1
+    for i in range(len(new_group_data)-1):
+        index_pairs[new_group_data[i+1][0]] = ind
+        new_group_data[i+1][0] = ind
+        ind += 1
+
+
+    #replace user perm group indexes with new ones
+    for i in range(len(new_user_data)-1):
+        #[i+1][1] for roles, [i+1][2] for groups
+        groups = new_user_data[i+1][2]
+        if type(groups) != list:
+            groups = groups.split(";")
+        new_groups = ""
+        for r in groups:
+            new_groups += str(index_pairs[r]) + ";"
+        new_groups = new_groups[:-1]
+        new_user_data[i+1][2] = new_groups
+
+    f = open("./data/user_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_user_data:
+        writer.writerow(row)
+    f.close()
+
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_group_data:
+        writer.writerow(row)
+    f.close() 
+
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Group `{group_name}` has been deleted by admin `{admin_name}`!", 1, category="SystemLogs/Roles_Groups")
+    return "Refreshing!", {"Refresh": "5; url=/admin/group_manager.html"}    
+
+#change groups
+@app.route("/admin/changeGroups", methods=["POST"])
+def changeGroups():
+    perm_code = handle_users.check_site_perm("/admin/changeGroups", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    form = request.form
+    n_of_errors = 0
+    existing_group_names = []
+    errors = ""
+    new_groups = dr.groups_data
+
+    for s in form:
+        id = int(s.split("_")[0].replace("r", ""))
+        rtype = s.split("_")[1]
+        if rtype == "desc":
+            new_groups[id][3] = form[s]
+        if rtype == "perm":
+            new_groups[id][1] = form[s]
+        if rtype == "name":
+            existing_group_names.append(form[s])
+            if form[s] in existing_group_names:
+                if existing_group_names.count(form[s]) == 1:
+                    new_groups[id][2] = form[s]
+                else:
+                    n_of_errors += 1
+                    errors += "Name Already Taken: " + form[s] + "<br>"
+            else:
+                new_groups[id][2] = form[s]
+
+
+    if n_of_errors == 0:
+        f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+        writer = csv.writer(f)
+        for row in new_groups:
+            writer.writerow(row)
+        f.close()
+        if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+        else:
+            admin_name = "NOT_LOGGED_IN"
+        CreateLog(f"Admin `{admin_name}` modified some groups!", 1, category="SystemLogs/Roles_Groups")
+        return "No Errors! Changes saved successfully!, redirecting in 4 seconds...", {"Refresh":"4;url=/admin/group_manager.html"}
+    elif n_of_errors <= 3:
+        return errors + "3 or less errors, redirecting in 10 seconds...", {"Refresh":"10;url=/admin/group_manager.html"}
+    else:
+        return errors + "more than 3 errors, no redirection <br> <a href='/admin/group_manager.html'>Go Back To Role Manager Page</a>"
+
+#add role post
+@app.route("/admin/add_role.html", methods=["POST"])
+def add_role_post():
+    perm_code = handle_users.check_site_perm("/admin/add_role.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    form = request.form
+    name = form["name"]
+    desc = form["desc"]
+    perm = form["perm_level"]
+
+    #if no perm is specified we just block the role
+    if perm == "":
+        perm = "-1"
+
+    new_roles = dr.roles_data
+    existing_names = []
+
+    for i in range(len(new_roles)-1):
+        existing_names.append(new_roles[i+1][2])
+
+    if name in existing_names:
+        return "Name is Already Taken! Redirecting in 5...", {"Refresh":"5;url=/admin/role_manager.html"}
+    
+    id = len(new_roles)
+
+    new_row = [str(id), str(perm), name, desc]
+    new_roles.append(new_row)
+    f = open("./data/roles.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_roles:
+        writer.writerow(row)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Role `{name}` has been created by admin `{admin_name}`!", 0, category="SystemLogs/Roles_Groups")
+    return "Role Added! Redirecting in 5...", {"Refresh":"5;url=/admin/add_role.html"}
+
+#add group post
+@app.route("/admin/add_group.html", methods=["POST"])
+def add_group_post():
+    perm_code = handle_users.check_site_perm("/admin/add_group.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    form = request.form
+    name = form["name"]
+    desc = form["desc"]
+    perm = form["perm_level"]
+
+    #if no perm is specified we just block the role
+    if perm == "":
+        perm = "-1"
+
+    new_groups = dr.groups_data
+    existing_names = []
+
+    for i in range(len(new_groups)-1):
+        existing_names.append(new_groups[i+1][2])
+
+    if name in existing_names:
+        return "Name is Already Taken! Redirecting in 5...", {"Refresh":"5;url=/admin/add_group.html"}
+    
+    id = len(new_groups)
+
+    new_row = [str(id), str(perm), name, desc]
+    new_groups.append(new_row)
+    f = open("./data/groups.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_groups:
+        writer.writerow(row)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Group `{name}` has been created by admin `{admin_name}`!", 0, category="SystemLogs/Roles_Groups")
+    return "Group Added! Redirecting in 5...", {"Refresh":"5;url=/admin/group_manager.html"}    
+
+
+#handle site perms list page
+@app.route("/admin/site_perms.html")
+def site_perms():
+    perm_code = handle_users.check_site_perm("/admin/site_perms.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    perms = ""
+    for i in range(len(dr.site_perm_data)-1):
+        endpoint = dr.site_perm_data[i+1][0]
+        #ENDPOINTS MUST START WITH /
+        perms += f"<tr><td class='endpoint_td'>{endpoint}</td><td class='al_td'>{dr.site_perm_data[i+1][1]}</td><td class='modify_td'><a href='/admin/modify_site_perm/{endpoint[1:]}'>Modify</a></td><td class='del_td'><button onclick=\"location.href=\'/admin/delete_site_perm/{endpoint[1:]}\'\">Delete Rule</button></td></tr>"
+    return serve_html_website("/admin/site_perms.html").replace("PERMS", perms)
+
+#delete site perm rule
+@app.route("/admin/delete_site_perm/<path:p>")
+def delete_site_perm(p):
+    perm_code = handle_users.check_site_perm("/admin/delete_site_perm/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    new_site_perms = [dr.site_perm_data[0]]
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] != "/" + p:
+            new_site_perms.append(dr.site_perm_data[i+1])
+    
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_site_perms:
+        writer.writerow(row)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Site perm `{p}` has been deleted by admin `{admin_name}`", 1, "SystemLogs/Site_Perms")
+    return "Changes Made! Refreshing...", {"Refresh":"6;url=/admin/site_perms.html"}        
+
+#Modify site permissions
+@app.route("/admin/modify_site_perm/<path:p>")
+def modify_site_perm(p):
+    perm_code = handle_users.check_site_perm("/admin/modify_site_perm/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    row = ""
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] == "/" + p:
+            row = dr.site_perm_data[i+1]
+    if row == "":
+        return "Rule doesnt exist!", {"Refresh":"6;url=/admin/site_perms.html"}
+    accessLevel = row[1]
+    roleIDs = row[2]
+    groupIDs = row[3]
+    userIDs = row[4]
+    pl = row[5]
+    role_pair = {}
+    group_pair = {}
+    user_pair = {}
+    roles = ""
+    groups = ""
+    users = ""
+    al = "<option value='-1'>Disabled</option><option value='0'>Role/Group/User limit</option><option value='1'>Access set by perm level</option>"
+    al = al.replace(f"value='{accessLevel}'",f"value='{accessLevel}' selected")
+
+    for i in range(len(dr.roles_data)-1):
+        role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][2]
+
+    for i in range(len(dr.groups_data)-1):
+        group_pair[dr.groups_data[i+1][0]] = dr.groups_data[i+1][2]
+
+    for i in range(len(dr.users_data)-1):
+        user_pair[dr.users_data[i+1][0]] = dr.users_data[i+1][1]
+
+    for id in role_pair.keys():
+        roles += f"<option value='{id}'>{role_pair[id]}</option>"
+    for id in group_pair.keys():
+        groups += f"<option value='{id}'>{group_pair[id]}</option>"
+    for id in user_pair.keys():
+        users += f"<option value='{id}'>{user_pair[id]}</option>"
+    users += f"<option value='-1'>Per User Pages</option>"
+
+    manual_adds = "<script>"
+    #rendering already used groups roles etc
+    for id in roleIDs.split(";"):
+        if id == "":continue
+        manual_adds += f"addRoleManually({id});"
+    for id in groupIDs.split(";"):
+        if id == "":continue
+        manual_adds += f"addGroupManually({id});"
+    for id in userIDs.split(";"):
+        if id == "":continue
+        manual_adds += f"addUserManually({id});"
+
+    manual_adds += "</script>"
+    return serve_html_website("/admin/modify_site_perm.html").replace("ENDPOINT", "/" + p).replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("PERMLEVEL", pl).replace("ACCESSLEVEL", al) + manual_adds
+    
+
+@app.route("/admin/modify_perm/", methods=["POST"])
+def modify_perm():
+    perm_code = handle_users.check_site_perm("/admin/modify_perm/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    form = request.form
+    endpoint = form["endpoint"]
+    AL = form["AL"]
+    #truncating of extra ;
+    roles = form["roles_post"][:-1]
+    groups = form["groups_post"][:-1]
+    users = form["users_post"][:-1]
+    perm_level = form["perm_level"]
+    
+    new_perms = dr.site_perm_data
+    for i in range(len(new_perms)-1):
+        if new_perms[i+1][0] == endpoint:
+            new_perms[i+1][1] = AL
+            new_perms[i+1][2] = roles
+            new_perms[i+1][3] = groups
+            new_perms[i+1][4] = users
+            new_perms[i+1][5] = perm_level
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_perms:
+        writer.writerow(row)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Site perm `{endpoint}` has been modified by admin `{admin_name}`", 1, "SystemLogs/Site_Perms")
+    return "Rule modified!", {"Refresh": "2; url=/admin/site_perms.html"}
+
+#add site permissions
+@app.route("/admin/add_site_perm.html")
+def add_site_perm():
+    perm_code = handle_users.check_site_perm("/admin/add_site_perm.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    role_pair = {}
+    group_pair = {}
+    user_pair = {}
+    roles = ""
+    groups = ""
+    users = ""
+    al = "<option value='-1' selected>Disabled</option><option value='0'>Role/Group/User limit</option><option value='1'>Access set by perm level</option>"
+
+    for i in range(len(dr.roles_data)-1):
+        role_pair[dr.roles_data[i+1][0]] = dr.roles_data[i+1][2]
+
+    for i in range(len(dr.groups_data)-1):
+        group_pair[dr.groups_data[i+1][0]] = dr.groups_data[i+1][2]
+
+    for i in range(len(dr.users_data)-1):
+        user_pair[dr.users_data[i+1][0]] = dr.users_data[i+1][1]
+
+    for id in role_pair.keys():
+        roles += f"<option value='{id}'>{role_pair[id]}</option>"
+    for id in group_pair.keys():
+        groups += f"<option value='{id}'>{group_pair[id]}</option>"
+    for id in user_pair.keys():
+        users += f"<option value='{id}'>{user_pair[id]}</option>"
+    users += f"<option value='-1'>Per User Pages</option>"
+
+    return serve_html_website("/admin/add_site_perm.html").replace("ROLES", roles).replace("GROUPS", groups).replace("USERS", users).replace("ACCESSLEVEL", al)
+    
+
+@app.route("/admin/add_perm/", methods=["POST"])
+def add_perm():
+    perm_code = handle_users.check_site_perm("/admin/add_perm.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+
+    form = request.form
+    endpoint = form["endpoint"]
+    al = form["AL"]
+    roles = form["roles_post"][:-1]
+    groups = form["groups_post"][:-1]
+    users = form["users_post"][:-1]
+    pl = form["perm_level"]
+
+    if endpoint == "":
+        return "Endpoint must not be empty!", {"Refresh":"2;url=/admin/site_perms.html"}
+    if endpoint[0] != "/":
+        return "Endpoint must start with /", {"Refresh":"2;url=/admin/site_perms.html"}
+    DoesExist = 0
+    for i in range(len(dr.site_perm_data)-1):
+        if dr.site_perm_data[i+1][0] == endpoint:
+            DoesExist = 1
+    if DoesExist:
+        return "A rule for this endpoint is already in place!", {"Refresh":"4;url=/admin/site_perms.html"}           
+    
+    #actually adding it
+    new_perms = dr.site_perm_data
+    new_perms.append([endpoint, al, roles, groups, users, pl])
+    f = open("./data/site_perms.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_perms:
+        writer.writerow(row)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Site perm `{endpoint}` has been added by admin `{admin_name}`", 0, "SystemLogs/Site_Perms")
+    return "Perm added succesfully!", {"Refresh":"2;url=/admin/site_perms.html"}
+
+@app.route("/admin/change_config.html")
+def config_page():
+    perm_code = handle_users.check_site_perm("/admin/change_config.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    conf = open("./data/site_configs.json").read()
+    confdict = {}
+    for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
+        confdict[pair.split(":")[0].replace(" ", "")] = "".join(pair.split(":")[1:]).replace(" ", "")
+    
+    #reusing it
+    conf = ""
+    for key in confdict.keys():
+        conf += f"{key} = <input value='{confdict[key]}' name='{key}'> <a href='/admin/delete_config/{key}'>Delete</a><br>"
+    return serve_html_website("/admin/change_config.html").replace("CONFIGS", conf)
+
+@app.route("/admin/delete_config/<path:p>")
+def del_conf(p):
+    perm_code = handle_users.check_site_perm("/admin/delete_config.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    f = open("./data/site_configs.json")
+    newfile = ""
+    DoesExist = 0
+    for line in f.readlines():
+        try:
+            if p != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                newfile += line
+            else:
+                DoesExist = 1
+        except:
+            pass
+    if not DoesExist:
+        return "Config does not exist!", {"Refresh": "3; url=/admin/change_config.html"}
+    newfile = newfile.replace(",\n}", "\n}")
+    f.close()
+    f = open("./data/site_configs.json", "w")
+    f.write(newfile)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Config rule `{p}` has been removed by admin `{admin_name}`", 1, "SystemLogs/Configs")
+    return "Changes made!", {"Refresh": "3; url=/admin/change_config.html"}
+
+@app.route("/admin/add_conf/", methods=["POST"])
+def add_conf():
+    perm_code = handle_users.check_site_perm("/admin/add_conf", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    key = request.form["k"]
+    value = request.form["v"]
+    if " " in key:
+        return "Key must not contain spaces!", {"Refresh": "4; url=/admin/add_config.html"}
+    f = open("./data/site_configs.json")
+    conf = json.loads(f.read())
+    f.close()
+    if key in conf.keys():
+        return "Config already exists!", {"Refresh": "3;/admin/add_config.html"}
+    #actually defining the value
+    conf[key] = value
+    #converting to the correct format with \n -s or the delete wont be happy
+    jsonobj = "{\n"
+    clen = len(conf)
+    keys = list(conf)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{conf[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Config rule `{key}` has been added by admin `{admin_name}`", 0, "SystemLogs/Configs")
+    return "Config added!", {"Refresh": "2;/admin/change_config.html"}
+
+@app.route("/admin/change_conf/", methods=["POST"])
+def change_conf():
+    perm_code = handle_users.check_site_perm("/admin/change_conf", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    conf = request.form
+
+    jsonobj = "{\n"
+    clen = len(conf)
+    keys = list(conf)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{conf[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open("./data/site_configs.json", "w")
+    f.write(jsonobj)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Admin `{admin_name}` has modified some configs", 1, "SystemLogs/Configs")
+    return "Config changed!", {"Refresh": "2;/admin/change_config.html"}
+
+#plugin manager website
+@app.route("/admin/plugin_manager.html")
+def plugin_manager():
+    perm_code = handle_users.check_site_perm("/admin/plugin_manager.html", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    pluginlist = os.listdir("./plugins/")
+    pluginlist.pop(pluginlist.index("__init__.py"))
+    pluginlist.pop(pluginlist.index("__pycache__"))
+    pl_html = ""
+    #defined here so we dont redefine the same thing every time
+    enabled_data = dr.plugin_enabled_data
+    #make an enabled pairing
+    enabled_pair = {}
+    for i in range(len(enabled_data)-1):
+        enabled_pair[enabled_data[i+1][0]] = enabled_data[i+1][1]
+    for p in pluginlist:
+        try:
+            pl_data = Imported_plugins[p].PluginData()
+        except:
+            pl_data = None   
+
+        pl_html += f"<div id='{p}' onclick='window.location=\"/admin/plugin_sheet/{p}\"'><p  class='name'>{p}</p> <br>"
+
+        try:
+            pl_html += f"<p class='version'>Version: {pl_data.version}</p>"
+        except:
+            pl_html += f"<p class='version'>Version: Not specified</p>"     
+
+        try:
+            pl_html += f"<p class='description'>Description: {pl_data.description}</p>"
+        except:
+            pl_html += f"<p class='description'>No description</p>" 
+
+        if p in pluginerrors.keys():
+            # Display error set when importing
+            pl_html += f"<p class='error'>Error:{pluginerrors[p]}</p>"
+        elif p not in Imported_plugins:
+            # Plugin probably was added after startup, and plugins werent reloaded
+            pl_html += f"<p class='error'>Error:Plugin not imported! Reload Plugins! (might just be disabled)</p>"
+
+        try:
+            if p not in enabled_pair.keys():
+                pl_html += "<div class='status_no_import' title='Plugin is not imported, press reload!'></div>"
+            elif int(enabled_pair[p]) == 1:    
+                pl_html += "<div class='status_enabled' title='Plugin enabled'></div>"
+            elif int(enabled_pair[p]) == 0:
+                pl_html += "<div class='status_disabled' title='Plugin disabled'></div>"
+            else:
+                pl_html += "<div class='status_error' title='An error occured'></div>"
+        except:
+                pl_html += "<div class='status_error' title='An error occured'></div>"
+        pl_html += "</div>"
+    return serve_html_website("/admin/plugin_manager.html").replace("PLUGINCARDS", pl_html)
+
+@app.route("/admin/reload_plugins/")
+def reload_pl_site():
+    perm_code = handle_users.check_site_perm("/admin/reload_plugins", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    reload_plugins()
+    return "Reloading...", {"Refresh":"2;url=/admin/plugin_manager.html"}
+
+
+
+@app.route("/admin/plugin_sheet/<path:p>")
+def plugin_sheet(p):
+    perm_code = handle_users.check_site_perm("/admin/plugin_sheet/" + p, request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    try:
+        pl_data = Imported_plugins[p].PluginData()
+    except:
+        version = "#CANT IMPORT#"
+        description = "#CANT IMPORT#"
+        path = "#CANT IMPORT#"   
+
+    try:
+        version = str(pl_data.version)
+    except:    
+        version = "#CANT IMPORT#"
+
+    try:
+        path = str(pl_data.path)
+    except:
+        path = "#CANT IMPORT#"
+
+    try:
+        description = str(pl_data.description)
+    except:
+        description = "#CANT IMPORT#"
+
+    #display config
+    if os.path.exists(f"./plugins/{p}/__plugin_configs__.json"):
+        try:
+            conf_file = open(f"./plugins/{p}/__plugin_configs__.json")
+            conf = conf_file.read()
+            confdict = {}
+            for pair in conf.replace("{", "").replace("}", "").replace("\"", "").replace("\n", "").split(","):
+                confdict[pair.split(":")[0].replace(" ", "")] = pair.split(":")[1].replace(" ", "")
+    
+            #reusing it
+            conf = ""
+            for key in confdict.keys():
+                conf += f"{key} = <input value='{confdict[key]}' name='{key}'> <a href='/admin/delete_pl_config/{p}/{key}'>Delete</a><br>"
+            conf += '<input type="submit" value="Change Configs" id="conf_change_submit">'
+        except:
+            conf = "Configs are empty or incorrectly formatted"
+    else:
+        conf = "__plugin_configs__.json does not exist"
+
+    return serve_html_website("/admin/plugin_sheet.html").replace("VERSION", version).replace("PATH", path).replace("DESCRIPTION", description).replace("NAME", p).replace("CONFIGS", conf)
+
+
+
+@app.route("/admin/delete_pl_config/<path:pl_name>/<path:conf_name>")
+def delete_pl_config(pl_name, conf_name):
+    perm_code = handle_users.check_site_perm(f"/admin/delete_pl_config/{pl_name}/{conf_name}", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json")
+    newfile = ""
+    DoesExist = 0
+    for line in f.readlines():
+        try:
+            if conf_name != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                newfile += line
+            else:
+                DoesExist = 1
+        except:
+            pass
+    if not DoesExist:
+        return "Config does not exist!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+    newfile = newfile.replace(",\n}", "\n}")
+    f.close()
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
+    f.write(newfile)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin config rule `{conf_name}` of plugin `{pl_name}` has been deleted by admin `{admin_name}`", 1, "SystemLogs/Plugins/Configs")
+    return "Changes made!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+
+@app.route("/admin/add_pl_config/", methods=["POST"])
+def add_pl_config():
+    perm_code = handle_users.check_site_perm(f"/admin/add_pl_config/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    pl_name = request.form["__pl_name__"]
+    key = request.form["k"]
+    value = request.form["v"]
+    key = key.replace(" ", "")
+    value = value.replace(" ", "")
+    if key == "" or value == "":
+        return "Both key, and value must be a valid string, without spaces!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+
+    if not os.path.exists(f"./plugins/{pl_name}/__plugin_configs__.json"):
+        f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "x")
+        f.write("{}")
+        f.close()
+
+
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json")
+    newfile = ""
+    if f.read().replace("{", "").replace("}", "").replace("\n", "").replace(" ", "") == "":
+        newfile = "{\n\"" + key + "\":\"" + value + "\"\n}"
+    else:
+        f.seek(0)
+        for line in f.readlines():
+            try:
+                if key != line.split(":")[0].replace("\"", "").replace(" ", ""):
+                    newfile += line
+                else:
+                    return "Config already exists!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}       
+            except:
+                pass
+        #we delete the \n} from the end to make room for new element, cause last element needs a comma; gets added back
+        newfile = newfile[:-2]
+        #added weirdly cause f string bs
+        newfile += f",\n\"{key}\":\"{value}\"\n" + "}"
+
+        f.close()
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
+    f.write(newfile)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin config rule `{key}` of plugin `{pl_name}` has been added by admin `{admin_name}`", 0, "SystemLogs/Plugins/Configs")
+    return "Changes made!", {"Refresh": f"3; url=/admin/plugin_sheet/{pl_name}"}
+
+@app.route("/admin/change_pl_config/", methods=["POST"])
+def change_pl_conf():
+    perm_code = handle_users.check_site_perm(f"/admin/change_pl_config/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+    conf = dict(request.form)
+    conf.pop("__pl_name__")
+    pl_name = request.form["__pl_name__"]
+    jsonobj = "{\n"
+    clen = len(conf)
+    keys = list(conf)
+    for i in range(clen):
+        jsonobj += f"\"{keys[i]}\":\"{conf[keys[i]]}\""
+        if i != clen - 1:
+            jsonobj += ",\n"
+        else:
+            jsonobj += "\n}"    
+    f = open(f"./plugins/{pl_name}/__plugin_configs__.json", "w")
+    f.write(jsonobj)
+    f.close()
+    if "|" in request.cookies.get("token"):
+            admin_name = request.cookies.get("token").split("|")[1]
+    else:
+            admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin config rules of plugin `{pl_name}` have been changed by admin `{admin_name}`", 1, "SystemLogs/Plugins/Configs")
+    return "Config changed!", {"Refresh": f"2;url=/admin/plugin_sheet/{pl_name}"}
+
+
+
+@app.route("/admin/changePluginStatus/", methods=["POST"])
+def change_pl_stat():
+    perm_code = handle_users.check_site_perm("/admin/changePluginStatus/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    form = request.form
+    name = form["name"]
+    action = form["action"]
+    
+    new_enable_data = dr.plugin_enabled_data
+    for i in range(len(new_enable_data)-1):
+        if new_enable_data[i+1][0] == name:
+            if action == "Enable":
+                new_enable_data[i+1][1] = 1
+            if action == "Disable":
+                new_enable_data[i+1][1] = 0
+    
+    f = open("./data/plugin_enabled.csv", "w", encoding="UTF-8", newline='')
+    writer = csv.writer(f)
+    for row in new_enable_data:
+        writer.writerow(row)
+    f.close()
+
+    #wait for data reader to refresh
+    reload_time = dr.site_config_data["RefreshDataFrequency"]
+    time.sleep(int(reload_time))
+
+    reload_plugins()
+    if "|" in request.cookies.get("token"):
+                admin_name = request.cookies.get("token").split("|")[1]
+    else:
+                admin_name = "NOT_LOGGED_IN"
+    CreateLog(f"Plugin {name} got {action.lower()}d by admin `{admin_name}`", 0, "SystemLogs/Plugins/Enables")
+    return "Status changed", {"Refresh":"0;url=/admin/plugin_manager.html"}
+
+
+@app.route("/admin/removePlugin/", methods=["POST"])
+def remove_plugin():
+    perm_code = handle_users.check_site_perm("/admin/changePluginStatus/", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    name = request.form["name"]
+    try:
+        confirmed = request.form["confirm"]
+        if confirmed == "1":
+            #confirmed, delete
+            shutil.rmtree("./plugins/" + name)
+            if "|" in request.cookies.get("token"):
+                admin_name = request.cookies.get("token").split("|")[1]
+            else:
+                admin_name = "NOT_LOGGED_IN"
+            CreateLog(f"Plugin `{name}` got removed by admin `{admin_name}`", 1, "SystemLogs/Plugins/Removal")
+            return "Plugin removed, redirecting...", {"Refresh":"3;url=/admin/plugin_manager.html"}
+        else:
+            raise(Exception("non-1-confirm"))
+    except Exception as e:
+        #nah, get confirm
+        return serve_html_website("/admin/plugin_rm_confirm.html").replace("NAME", name)   
+
+@app.route("/admin/update_system.html", methods=["GET", "POST"])
+def update_system():
+    return serve_html_website("/admin/update_system.html")
+
+@app.route("/api/", methods=["GET"])
+def api_handle_get():
+    if str(dr.site_config_data["APIEnabled"]) != "1":
+        return "400 Bad Request; API is disabled"
+    return "400 Bad Request; must use POST request"
+
+@app.route("/api/", methods=["POST"])
+def api_handle():
+    if str(dr.site_config_data["APIEnabled"]) != "1":
+        return "400 Bad Request; API is disabled"
+    return api.handle(request)
+
+        
+#plugins with subfolders
+@app.route("/plugins/<path:p>", methods=["GET", "POST"])
+def plugin_site_handler(p):
+    perm_code = handle_users.check_site_perm(f"/plugins/{p}", request.cookies.get("token"))
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+    
+    if "/" not in p:
+        return "", {"Refresh":"0;url=/404.html"}
+    plname = p.split("/")[0]
+    endp = "/" + "/".join(p.split("/")[1:])
+    try:
+        CreateLog(f"`{endp}` endpoint of plugin `{plname}` got accessed from {request.remote_addr}", 0, f"Plugins/{plname}")
+        return Imported_plugins[plname].load_site(endp, request)
+    except KeyError:
+        if plname in os.listdir("./plugins/"):
+            return "Plugin is disabled!", {"Refresh":"5;url=/admin/plugin_manager.html"}
+        else:
+            return "Plugin does not exist!", {"Refresh":"5;url=/admin/plugin_manager.html"}
+
+
+#handle any other static site
+@app.route('/<path:p>')
+def static_sites(p):
+    if p[-1] == "/":
+        p += "index.html"
+    perm_code = handle_users.check_site_perm(p, request.cookies.get("token"))
+    if perm_code == "200":
+        return serve_html_website(p)
+    if perm_code == "401":
+        return "", {"Refresh": "0; url=/401.html"}
+    if perm_code == "403":
+        #page is disabled
+        website = dr.site_config_data["PageDisabledSite"]
+        return "", {"Refresh":f"0;url={website}"}
+    if perm_code == "423":
+        #user disabled (http code for "locked")
+        website = dr.site_config_data["UserDisabledSite"]  
+        return "", {"Refresh":f"0;url={website}"}
+
+port = 5000
+#try fetching the port
+try:
+    port = int(dr.site_config_data["ServerPort"])
+except:
+    CreateLog("Port could not be fetched, staring on standard port: 5000", 0, "SystemLogs/Startup")
+app.run(port=port)
