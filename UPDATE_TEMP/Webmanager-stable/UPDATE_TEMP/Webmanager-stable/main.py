@@ -10,7 +10,6 @@ import api
 import threading
 import requests
 import zipfile
-import math
 
 dr.init()
 def create_app():
@@ -103,61 +102,22 @@ def CheckFiles(path, parent_folder):
                 print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, " ;;;; ", path + f)
                 checksum_original = hashlib.new("sha256")
                 checksum_git = hashlib.new("sha256")
-
-                k_file = open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb")
-                k = k_file.read()
-                if k.endswith(b"\n"):
-                    print("TEMP HAS TRAILING!!!!!!!!!!!!!!!!!!")
-                    k = k[:-1]
-                k = k.replace(b"\r\n", b"\n")
-
-                j_file = open(path + f, "rb")
-                j = j_file.read()
-                if j.endswith(b"\n"):
-                    print("ORIGINAL HAS TRAILING!!!!!!!!!!!!!!!!!!")
-                    j = j[:-1]
-                j = j.replace(b"\r\n", b"\n")
-
-                print("---------------------------")
-                print(len(k))
-                print(len(j))
-                print("---------------------------")
-                k_chunks = []
-                j_chunks = []
-
-                for l in range(math.ceil(len(k)/512)):
-                    try:
-                        k_chunks.append(k[l*512:(l+1)*512])
-                    except IndexError:
-                        k_chunks.append(k[l*512:])
-                
-                for o in range(math.ceil(len(j)/512)):
-                    try:
-                        j_chunks.append(j[o*512:(o+1)*512])
-                    except IndexError:
-                        j_chunks.append(j[o*512:])
-                
-                
-                for chunk in k_chunks:
-                    checksum_git.update(chunk)
-                
-                for chunk in j_chunks:
-                    checksum_original.update(chunk)
-
-                '''
                 with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
                     # git adds random \r escape characters to code. Its annoying, but it causes detection errors
                     chunk = k.read(8192).replace(b"\r\n", b"\n")
                     while len(chunk) != 0:
-                        checksum_original.update(chunk)
+                        if len(chunk) == 8192:
+                            checksum_original.update(chunk)
                         chunk = k.read(8192).replace(b"\r\n", b"\n")
                     
                 with open(path + f, "rb") as j:
                     chunk = j.read(8192).replace(b"\r\n", b"\n")
                     while len(chunk) != 0:
-                        checksum_git.update(chunk)
+                        if len(chunk) == 8192:
+                            checksum_git.update(chunk)
+                            print("Updated")
                         chunk = j.read(8192).replace(b"\r\n", b"\n")
-                '''
+                
                 if checksum_original.digest() != checksum_git.digest():
                     print("DIFFERENCE!")
                     print(path+f)

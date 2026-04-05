@@ -107,14 +107,12 @@ def CheckFiles(path, parent_folder):
                 k_file = open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb")
                 k = k_file.read()
                 if k.endswith(b"\n"):
-                    print("TEMP HAS TRAILING!!!!!!!!!!!!!!!!!!")
                     k = k[:-1]
                 k = k.replace(b"\r\n", b"\n")
 
                 j_file = open(path + f, "rb")
                 j = j_file.read()
                 if j.endswith(b"\n"):
-                    print("ORIGINAL HAS TRAILING!!!!!!!!!!!!!!!!!!")
                     j = j[:-1]
                 j = j.replace(b"\r\n", b"\n")
 
@@ -143,26 +141,11 @@ def CheckFiles(path, parent_folder):
                 
                 for chunk in j_chunks:
                     checksum_original.update(chunk)
-
-                '''
-                with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
-                    # git adds random \r escape characters to code. Its annoying, but it causes detection errors
-                    chunk = k.read(8192).replace(b"\r\n", b"\n")
-                    while len(chunk) != 0:
-                        checksum_original.update(chunk)
-                        chunk = k.read(8192).replace(b"\r\n", b"\n")
-                    
-                with open(path + f, "rb") as j:
-                    chunk = j.read(8192).replace(b"\r\n", b"\n")
-                    while len(chunk) != 0:
-                        checksum_git.update(chunk)
-                        chunk = j.read(8192).replace(b"\r\n", b"\n")
-                '''
                 if checksum_original.digest() != checksum_git.digest():
                     print("DIFFERENCE!")
                     print(path+f)
                     print("Checksums:\nOriginal:", checksum_original.hexdigest(), "\nGit:", checksum_git.hexdigest())
-                    #shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
+                    shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
             else:
                 print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                 shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
@@ -244,6 +227,7 @@ def UpdateSystemTimer():
         time.sleep(freq*60)
 
 UpdateThread = threading.Thread(target=UpdateSystemTimer)
+UpdateThread.daemon = True
 UpdateThread.start()
 
 def serve_html_website(route):

@@ -1,0 +1,29 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Add Role</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="/css/add_rg.css">
+    </head>
+    <body>
+        <form action="" method="POST">
+            <table>
+                <thead>
+                    <th>Role Name</th>
+                    <th>Role Description</th>
+                    <th>Permission Level</th>
+                </thead>
+                <tr>
+                    <td><input type="text" name="name"></td> 
+                    <td><input type="text" name="desc"> </td>
+                    <td><input type="number" name="perm_level"></td>
+                </tr>
+            </table> <br>
+            <input type="submit" value="Add Role">
+        </form>
+    </body>
+    
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>
