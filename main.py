@@ -192,7 +192,7 @@ def UpdateSystemFunc():
         shutil.rmtree(f'./UPDATE_TEMP/{parent_folder}/__pycache__')
     CheckFiles(f"./UPDATE_TEMP/{parent_folder}/", parent_folder)
 
-    #shutil.rmtree("./UPDATE_TEMP")
+    shutil.rmtree("./UPDATE_TEMP")
         
 
 # This one just times it
