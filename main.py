@@ -107,20 +107,12 @@ def CheckFiles(path, parent_folder):
                 k_file = open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb")
                 k = k_file.read()
                 if k.endswith(b"\n"):
-<<<<<<< HEAD
-                    print("TEMP HAS TRAILING!!!!!!!!!!!!!!!!!!")
-=======
->>>>>>> f1d06cf938ecfb74be10cd2b136eb70ec4abce3f
                     k = k[:-1]
                 k = k.replace(b"\r\n", b"\n")
 
                 j_file = open(path + f, "rb")
                 j = j_file.read()
                 if j.endswith(b"\n"):
-<<<<<<< HEAD
-                    print("ORIGINAL HAS TRAILING!!!!!!!!!!!!!!!!!!")
-=======
->>>>>>> f1d06cf938ecfb74be10cd2b136eb70ec4abce3f
                     j = j[:-1]
                 j = j.replace(b"\r\n", b"\n")
 
@@ -149,24 +141,6 @@ def CheckFiles(path, parent_folder):
                 
                 for chunk in j_chunks:
                     checksum_original.update(chunk)
-<<<<<<< HEAD
-
-                '''
-                with open("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, "rb") as k:
-                    # git adds random \r escape characters to code. Its annoying, but it causes detection errors
-                    chunk = k.read(8192).replace(b"\r\n", b"\n")
-                    while len(chunk) != 0:
-                        checksum_original.update(chunk)
-                        chunk = k.read(8192).replace(b"\r\n", b"\n")
-                    
-                with open(path + f, "rb") as j:
-                    chunk = j.read(8192).replace(b"\r\n", b"\n")
-                    while len(chunk) != 0:
-                        checksum_git.update(chunk)
-                        chunk = j.read(8192).replace(b"\r\n", b"\n")
-                '''
-=======
->>>>>>> f1d06cf938ecfb74be10cd2b136eb70ec4abce3f
                 if checksum_original.digest() != checksum_git.digest():
                     print("DIFFERENCE!")
                     print(path+f)
