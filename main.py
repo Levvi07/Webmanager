@@ -26,7 +26,10 @@ pluginerrors = {}
 def reload_plugins():
     global Imported_plugins
     dr.add_plugin_config("RESET")
-    Imported_plugins = {}
+    #Reloading all existing plugins
+    pl_keys = Imported_plugins.keys()
+    for key in pl_keys:
+        Imported_plugins[key] = importlib.reload(Imported_plugins[key])
     #getting all the plugins
     pluginlist = os.listdir("./plugins")
     if "__init__.py" in pluginlist:
@@ -59,14 +62,16 @@ def reload_plugins():
                 for row in new_enabled_data:
                     writer.writerow(row)
                 f.close()
-            Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
-            if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
-                CreateLog(text=f"Wont import module {name} because 'name' field is empty (See PluginData class)", severity=2, category="SystemLogs/Plugins/Init")
-                pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
-                Imported_plugins.pop(name)
-            if int(enabled_pair[name]) != 1:
-                CreateLog(text=f"Wont import module {name} because its disabled", severity=2, category="SystemLogs/Plugins/Init")
-                Imported_plugins.pop(name)
+            #Adding new plugins
+            if name not in Imported_plugins:
+                Imported_plugins[name] = importlib.import_module(f"plugins.{name}.__plugin_init__")
+                if Imported_plugins[name].PluginData().name.replace(" ", "") == "":
+                    CreateLog(text=f"Wont import module {name} because 'name' field is empty (See PluginData class)", severity=2, category="SystemLogs/Plugins/Init")
+                    pluginerrors[name] = f"Wont import module, because 'name' field is empty (See PluginData class)"
+                    Imported_plugins.pop(name)
+                if int(enabled_pair[name]) != 1:
+                    CreateLog(text=f"Wont import module {name} because its disabled", severity=0, category="SystemLogs/Plugins/Init")
+                    Imported_plugins.pop(name)
         except AttributeError:
             CreateLog(text=f"Cant initalise module '{name}' because PluginData class is not present or some data is missing", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = "PluginData class is not present or some data is missing"
@@ -100,7 +105,6 @@ def CheckFiles(path, parent_folder):
         if os.path.isfile(path + f):
             #file, check the checksum, replace if needed
             if os.path.exists("./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f ):
-                print("File exists, checking sum for : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f, " ;;;; ", path + f)
                 checksum_original = hashlib.new("sha256")
                 checksum_git = hashlib.new("sha256")
 
@@ -115,11 +119,6 @@ def CheckFiles(path, parent_folder):
                 if j.endswith(b"\n"):
                     j = j[:-1]
                 j = j.replace(b"\r\n", b"\n")
-
-                print("---------------------------")
-                print(len(k))
-                print(len(j))
-                print("---------------------------")
                 k_chunks = []
                 j_chunks = []
 
@@ -142,12 +141,8 @@ def CheckFiles(path, parent_folder):
                 for chunk in j_chunks:
                     checksum_original.update(chunk)
                 if checksum_original.digest() != checksum_git.digest():
-                    print("DIFFERENCE!")
-                    print(path+f)
-                    print("Checksums:\nOriginal:", checksum_original.hexdigest(), "\nGit:", checksum_git.hexdigest())
                     shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
             else:
-                print("File does not exist, creating : ", "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
                 shutil.copyfile(path + f, "./" + path.replace(f"./UPDATE_TEMP/{parent_folder}/", "") + f)
         else:
             #dir, recursive stuff, call checkfiles again
@@ -1951,7 +1946,6 @@ def plugin_site_handler(p):
         return "", {"Refresh":"0;url=/404.html"}
     plname = p.split("/")[0]
     endp = "/" + "/".join(p.split("/")[1:])
-    print("Plugin_endpoint:", endp)
     try:
         CreateLog(f"`{endp}` endpoint of plugin `{plname}` got accessed from {request.remote_addr}", 0, f"Plugins/{plname}")
         return Imported_plugins[plname].load_site(endp, request)
