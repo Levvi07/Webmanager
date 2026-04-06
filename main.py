@@ -1951,6 +1951,7 @@ def plugin_site_handler(p):
         return "", {"Refresh":"0;url=/404.html"}
     plname = p.split("/")[0]
     endp = "/" + "/".join(p.split("/")[1:])
+    print("Plugin_endpoint:", endp)
     try:
         CreateLog(f"`{endp}` endpoint of plugin `{plname}` got accessed from {request.remote_addr}", 0, f"Plugins/{plname}")
         return Imported_plugins[plname].load_site(endp, request)
