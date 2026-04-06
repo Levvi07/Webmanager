@@ -20,10 +20,8 @@ class PluginData():
 import os
 def serve_html_website(route):
     if not os.path.exists("." + PluginData().path + "templates/" + route):
-        print("first          ", "." + PluginData().path + "templates/" + route)
         return "", {"Refresh": "0; url=/404.html"}
     if route[-1] != "/" and os.path.isdir("." + PluginData().path + "templates/" + route):
-        print("secpnd")
         return "", {"Refresh": "0; url=/404.html"}
     pl_path = PluginData().path
     if pl_path[-1] != "/":
