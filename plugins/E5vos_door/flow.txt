@@ -1,0 +1,6 @@
+1. Pico listens for scans
+2. Pico reads data
+3. Sends it to the server
+4. Server checks against SQL database
+5. Either authorises or not
+6. If valid -> Calls subroutine for pico to open door

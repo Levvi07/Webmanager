@@ -75,9 +75,9 @@ def reload_plugins():
         except AttributeError:
             CreateLog(text=f"Cant initalise module '{name}' because PluginData class is not present or some data is missing", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = "PluginData class is not present or some data is missing"
-        except ModuleNotFoundError:
-            CreateLog(text=f"Cant initalise module '{name}' because __plugin_init__.py is not present", severity=2, category="SystemLogs/Plugins/Init")
-            pluginerrors[name] = f"Cant initalise module, because __plugin_init__.py is not present"
+        except ModuleNotFoundError as e:
+            CreateLog(text=f"Cant initalise module '{name}' because __plugin_init__.py, or one of its dependencies cannot be imported (ModuleNotFoundError); `{e}`", severity=2, category="SystemLogs/Plugins/Init")
+            pluginerrors[name] = f"Cant initalise module '{name}' because __plugin_init__.py, or one of its dependencies cannot be imported (ModuleNotFoundError); `{e}`"
         except Exception as e:
             CreateLog(text=f"Miscellanous error:{e}", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = e
@@ -230,7 +230,7 @@ def serve_html_website(route):
         return "", {"Refresh": "0; url=/404.html"}
     if route[-1] != "/" and os.path.isdir("./templates/" + route):
         return "", {"Refresh": "0; url=/404.html"}
-    f = open("./templates/" + route)
+    f = open("./templates/" + route, encoding="UTF-8")
     return f.read()
 
 app = create_app()

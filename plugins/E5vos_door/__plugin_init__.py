@@ -5,15 +5,15 @@
 # This file is a standardised file for all plugins
 # This file MUST exist in the root folder of the plugin otherwise it wont work
 # Use the page decorator for defining your endpoints
-# The data in the PluginData class is not compulsory, but advisable, EXCEPT the name, and path field, which must not be empty
+# The data in the PluginData class is not compulsory, but advisable, EXCEPT the name, and path fields, which must not be empty
 
 # only edit onwards from the "EDIT FROM HERE" flag as the first part is just operative and changing it might break your plugin
 #---------------------------------------------------------------
 class PluginData():
-    name = "TemplatePlugin"
+    name = "E5vosDoor"
     version = "1.0"
-    description = "This is a template plugin"
-    path = "/plugins/Template_plugin/"
+    description = "This plugin controls our door in the EAM"
+    path = "/plugins/E5vos_door/"
     
 
 
@@ -71,13 +71,10 @@ def endpoint(name):
 # an asterisk does the same thing, as what <path:p> does in flask
 
 import data_reader as dr
+from plugins.E5vos_door.subroutines import database
 @endpoint("/")
 def index(request):
     return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data)).replace("REQUEST", str(request.form))
-
-@endpoint("/second/")
-def adminpage():
-    return serve_html_website("SecondSite.html")
 
 @endpoint("/css/*")
 def css(p):
@@ -89,6 +86,11 @@ def css(p):
     f = open(f".{pl_path}css/{p}")
     return f.read()
 
+@endpoint("/dbtest/")
+def dbtest():
+    db = database.Database("127.0.0.1", "Levi", "pass")
+    return "asd"
+
 #handle js
 @endpoint("/js/*")
 def js(p):
@@ -99,3 +101,4 @@ def js(p):
         return "alert('Missing JS file:" + f".{pl_path}js/{p}" + "')"
     f = open(f".{pl_path}js/{p}")
     return f.read()
+
