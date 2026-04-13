@@ -72,6 +72,26 @@ def endpoint(name):
 
 import data_reader as dr
 from plugins.E5vos_door.subroutines import database
+from dotenv import load_dotenv
+load_dotenv()
+#---Variables---#
+db = ""
+
+#---Functions---#
+def ReloadDB():
+    global db
+    source = dr.site_config_data["DB_IP"]
+    user = dr.site_config_data["DB_username"]
+    passwd = os.getenv("PASSWORD")
+    db_name = dr.site_config_data["DB_db"]
+    table = dr.site_config_data["DB_Table"]
+    port = dr.site_config_data["DB_port"]
+    db = database.Database(source, port, user, passwd, db_name, table)
+
+ReloadDB()
+
+#---Endpoints---#
+
 @endpoint("/")
 def index(request):
     return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data)).replace("REQUEST", str(request.form))
@@ -86,9 +106,9 @@ def css(p):
     f = open(f".{pl_path}css/{p}")
     return f.read()
 
-@endpoint("/dbtest/")
+@endpoint("/reloadDB/")
 def dbtest():
-    db = database.Database("127.0.0.1", "Levi", "pass")
+    ReloadDB()
     return "asd"
 
 #handle js

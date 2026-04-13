@@ -43,6 +43,17 @@ def reload_plugins():
     for i in range(len(enabled_data)-1):
         enabled_pair[enabled_data[i+1][0]] = enabled_data[i+1][1]
 
+    #importing plugin configs
+    # Plugin configs are imported before the plugins themselves, so we can use configs in init
+    for name in pluginlist:
+        if os.path.exists(f"./plugins/{name}/__plugin_configs__.json"):
+            #import configs
+            f = open(f"./plugins/{name}/__plugin_configs__.json", "r")
+            dr.add_plugin_config(json.loads(f.read()))
+            f.close()
+        else:
+            CreateLog(text=f"global plugin configs for {name} dont exist", severity=1, category="SystemLogs/Plugins/Init")
+   
     #initialising all the __plugin_init__.py files (this is the standard file containing the page functions and all that)
     for name in pluginlist:
         try:
@@ -81,17 +92,6 @@ def reload_plugins():
         except Exception as e:
             CreateLog(text=f"Miscellanous error:{e}", severity=2, category="SystemLogs/Plugins/Init")
             pluginerrors[name] = e
-                
-                
-    #importing plugin configs
-    for name in Imported_plugins.keys():
-        if os.path.exists(f"./plugins/{name}/__plugin_configs__.json"):
-            #import configs
-            f = open(f"./plugins/{name}/__plugin_configs__.json", "r")
-            dr.add_plugin_config(json.loads(f.read()))
-            f.close()
-        else:
-            CreateLog(text=f"global plugin configs for {name} dont exist", severity=1, category="SystemLogs/Plugins/Init")
     CreateLog("All plugins have been reloaded", 0, "SystemLogs/Plugins/Reload")
 #loading plugins before execution
 reload_plugins()

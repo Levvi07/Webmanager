@@ -1,4 +1,7 @@
 {
-"Plugin_config1":"223",
-"Plugin_config2":"heytheredelilah"
+"DB_IP":"127.0.0.1",
+"DB_username":"Levi",
+"DB_db":"Door",
+"DB_Table":"Users",
+"DB_port":"3306"
 }

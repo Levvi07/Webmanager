@@ -42,7 +42,7 @@ You can add/delete/modify configs through the website, be vary not to delete the
 - It has to contain the subroutines for your endpoint
 - Upon startup, the server is going to initialise all plugins, but active reloading is not implemented (too resource heavy), if a  plugin is changed, press "Reload Plugin" on the plugins page
 - Plugins are to be placed in the "plugins" folder in a subfolder, holding the name of the plugin
-- All actions are logged in /log/PLUGINNAME_log.txt in the webservice's root folder
+- All actions are logged in /log/PLUGINNAME.log in the webservice's root folder
 - You may set configs for the plugins. You must create a file called "\__plugin_configs__.json" in the plugin's root folder and write the config as  {"key":value, "key2":value2} (standard JSON format)
 - You can change the configs trough the plugin manager page
 - You can access the main site's data through the data reader
