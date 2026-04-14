@@ -3,5 +3,6 @@
 "DB_username":"Levi",
 "DB_db":"Door",
 "DB_Table":"Users",
-"DB_port":"3306"
+"DB_port":"3306",
+"DB_entry":"entry"
 }

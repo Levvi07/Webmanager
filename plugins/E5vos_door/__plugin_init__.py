@@ -75,26 +75,45 @@ from plugins.E5vos_door.subroutines import database
 from dotenv import load_dotenv
 load_dotenv()
 #---Variables---#
-db = ""
+db = None
 
 #---Functions---#
 def ReloadDB():
     global db
+    if db != None:
+        db.Close()
     source = dr.site_config_data["DB_IP"]
     user = dr.site_config_data["DB_username"]
     passwd = os.getenv("PASSWORD")
     db_name = dr.site_config_data["DB_db"]
     table = dr.site_config_data["DB_Table"]
     port = dr.site_config_data["DB_port"]
-    db = database.Database(source, port, user, passwd, db_name, table)
+    entry_table = dr.site_config_data["DB_entry"]
+    db = database.Database(source, port, user, passwd, db_name, table, entry_table)
+    db.Connect()
 
 ReloadDB()
+
+def Validate(UUID):
+    global db
+    valid = db.Validate(UUID)
+    if valid:
+        print("Valid")
+        #open door, get time from config otherwise assume 10 seconds
+        pass
+    else:
+        print("Invalid")
 
 #---Endpoints---#
 
 @endpoint("/")
 def index(request):
     return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data)).replace("REQUEST", str(request.form))
+
+@endpoint("/validate/*")
+def val(p):
+    Validate(p)
+    return "Validating..."
 
 @endpoint("/css/*")
 def css(p):
@@ -109,7 +128,7 @@ def css(p):
 @endpoint("/reloadDB/")
 def dbtest():
     ReloadDB()
-    return "asd"
+    return "Reloaded"
 
 #handle js
 @endpoint("/js/*")
