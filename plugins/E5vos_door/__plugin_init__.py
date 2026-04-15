@@ -72,7 +72,9 @@ def endpoint(name):
 
 import data_reader as dr
 from plugins.E5vos_door.subroutines import database
+from plugins.E5vos_door.subroutines import pico
 from dotenv import load_dotenv
+import threading
 load_dotenv()
 #---Variables---#
 db = None
@@ -100,9 +102,40 @@ def Validate(UUID):
     if valid:
         print("Valid")
         #open door, get time from config otherwise assume 10 seconds
-        pass
+        return 1
     else:
         print("Invalid")
+
+def save_card(UUID):
+    global card_message
+    print(UUID)
+    print(card_message)
+
+ctr = pico.Pico()
+card_message = ""
+register_new_card = 0
+'''
+def Listen():
+    global register_new_card
+    while 1:
+        UUID = ctr.Listen()
+        if UUID != "" and not UUID.startswith("[MESSAGE]"):
+            if register_new_card:
+                register_new_card = 0
+                save_card(UUID)
+            print("UUID", UUID)
+            val = Validate(UUID)
+            if val:
+                ctr.Open(10)
+            else:
+                ctr.Open(-1)
+        elif UUID != "" and UUID.startswith("[MESSAGE]"):
+            print(UUID)
+
+t = threading.Thread(target=Listen)
+t.daemon = True
+t.start()
+'''
 
 #---Endpoints---#
 
@@ -110,10 +143,24 @@ def Validate(UUID):
 def index(request):
     return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data)).replace("REQUEST", str(request.form))
 
-@endpoint("/validate/*")
-def val(p):
-    Validate(p)
-    return "Validating..."
+@endpoint("/opendoor/")
+def opendoor():
+    global ctr
+    ctr.Open(10)
+    return "asd"
+
+@endpoint("/register_new/")
+def register_new():
+    return serve_html_website("register_new.html")
+
+@endpoint("/new_card/")
+def new_card(request):
+    global register_new_card
+    global card_message
+    card_message = request.form["message"]
+    register_new_card = 1
+    return "Tap new card...", {"Refresh":"6;url=./register_new/"} 
+
 
 @endpoint("/css/*")
 def css(p):
