@@ -29,7 +29,8 @@ class Database():
     def Validate(self, UUID):
         global db
         cursor = db.cursor(buffered=True)
-        cursor.execute(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE UUID = {UUID}")
+        print(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE UUID = '{UUID}'")
+        cursor.execute(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE `UUID` = '%{UUID}%'")
         ct = cursor.rowcount
         cursor.close()
         cursor = db.cursor(buffered=True)

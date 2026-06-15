@@ -14,7 +14,7 @@ class PluginData():
     version = "1.0"
     description = "This plugin controls our door in the EAM"
     path = "/plugins/E5vos_door/"
-    
+
 
 
 import os
@@ -114,7 +114,7 @@ def save_card(UUID):
 ctr = pico.Pico()
 card_message = ""
 register_new_card = 0
-'''
+
 def Listen():
     global register_new_card
     while 1:
@@ -135,7 +135,6 @@ def Listen():
 t = threading.Thread(target=Listen)
 t.daemon = True
 t.start()
-'''
 
 #---Endpoints---#
 

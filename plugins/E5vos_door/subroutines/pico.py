@@ -17,20 +17,15 @@ class Pico():
 
     def Listen(self):
         #Listen for serial
+        print("Started listening to serial for pico")
         time.sleep(2)
         UUID = self.ser.readline().decode('utf-8').strip()
         return UUID
     
     def Open(self, tim):
-        self.ser.write((f"OPEN\n").encode('utf-8'))
-        time.sleep(tim)
-        self.ser.write((f"CLOSE\n").encode('utf-8'))
-
-        '''
-        if time > 0:
-            self.ser.write((f"200 OK;{time}\n").encode('utf-8'))
+        if tim > 0:
+            self.ser.write((f"200 OK;{tim}\n").encode('utf-8'))
         else:
             self.ser.write((f"401 Denied;-1\n").encode('utf-8'))
-        '''
 
     
