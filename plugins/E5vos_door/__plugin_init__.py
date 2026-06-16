@@ -75,10 +75,14 @@ from plugins.E5vos_door.subroutines import database
 from plugins.E5vos_door.subroutines import pico
 from dotenv import load_dotenv
 import threading
+import time
 load_dotenv()
 #---Variables---#
 db = None
-
+card_name = ""
+card_email = ""
+card_e5kod = ""
+card_message = ""
 #---Functions---#
 def ReloadDB():
     global db
@@ -105,16 +109,26 @@ def Validate(UUID):
         return 1
     else:
         print("Invalid")
+        return 0
 
 def save_card(UUID):
+    global db
+    global card_name
+    global card_email
+    global card_e5kod
     global card_message
-    print(UUID)
-    print(card_message)
+    
+    db.Add(UUID, card_name, card_email, card_e5kod, card_message)
+
+    card_name = ""
+    card_email = ""
+    card_e5kod = ""
+    card_message = ""
+
+    print("NEW CARD ADDED!")
 
 ctr = pico.Pico()
-card_message = ""
 register_new_card = 0
-
 def Listen():
     global register_new_card
     while 1:
@@ -123,10 +137,16 @@ def Listen():
             if register_new_card:
                 register_new_card = 0
                 save_card(UUID)
+                continue
             print("UUID", UUID)
             val = Validate(UUID)
             if val:
-                ctr.Open(10)
+                open_time = dr.site_config_data["Door_open_time"]
+                try:
+                    open_time = int(open_time)
+                except:
+                    open_time = 15
+                ctr.Open(open_time)
             else:
                 ctr.Open(-1)
         elif UUID != "" and UUID.startswith("[MESSAGE]"):
@@ -142,12 +162,6 @@ t.start()
 def index(request):
     return serve_html_website("index.html").replace("CONFIG", str(dr.site_config_data)).replace("REQUEST", str(request.form))
 
-@endpoint("/opendoor/")
-def opendoor():
-    global ctr
-    ctr.Open(10)
-    return "asd"
-
 @endpoint("/register_new/")
 def register_new():
     return serve_html_website("register_new.html")
@@ -155,10 +169,16 @@ def register_new():
 @endpoint("/new_card/")
 def new_card(request):
     global register_new_card
+    global card_name
+    global card_email
+    global card_e5kod
     global card_message
-    card_message = request.form["message"]
+    card_name = request.form["name"]
+    card_email = request.form["email"]
+    card_e5kod = request.form["e5kod"]
+    card_message = request.form["comment"]
     register_new_card = 1
-    return "Tap new card...", {"Refresh":"6;url=./register_new/"} 
+    return "Tap new card...", {"Refresh":"6;url=../register_new/"} 
 
 
 @endpoint("/css/*")

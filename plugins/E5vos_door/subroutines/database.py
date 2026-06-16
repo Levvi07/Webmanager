@@ -29,16 +29,13 @@ class Database():
     def Validate(self, UUID):
         global db
         cursor = db.cursor(buffered=True)
-        print(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE UUID = '{UUID}'")
-        cursor.execute(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE `UUID` = '%{UUID}%'")
+        cursor.execute(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE `UUID` = '{UUID}'")
         ct = cursor.rowcount
         cursor.close()
         cursor = db.cursor(buffered=True)
-        print(f"INSERT INTO {self.entry_table} (UUID, Succesful) VALUES (%s, %s)")
         cursor.execute(f"INSERT INTO {self.entry_table} (UUID, Succesful) VALUES (%s, %s)", (UUID, int(ct)))
         db.commit()
         cursor.close()
-        print(ct)
         if ct == 1:
             #door opens
             CreateLog(f"Succesful entry with UUID `{UUID}`", 0,"SystemLogs/Plugins/E5vos_door")
@@ -51,3 +48,19 @@ class Database():
             #weird number, log issue
             CreateLog(f"Multiple rows returned for UUID `{UUID}`!!!!!", 2,"SystemLogs/Plugins/E5vos_door")
             pass
+
+
+    def Add(self, UUID, name, email, e5kod, comment):
+        global db
+        cursor = db.cursor(buffered=True)
+        cursor.execute(f"SELECT UUID FROM `{self.db_name}`.`{self.table}` WHERE `UUID` = '{UUID}'")
+        ct = cursor.rowcount
+        cursor.close()
+        if ct:
+            return "Already exists!"
+        
+        cursor = db.cursor(buffered=True)
+        print(f"INSERT INTO {self.table} (`UUID`, `Name`, `Email`, `E5kod`, `Comment`) VALUES ('{UUID}','{name}','{email}','{e5kod}','{comment}')")
+        cursor.execute(f"INSERT INTO {self.table} (`UUID`, `Name`, `Email`, `E5kod`, `Comment`) VALUES ('{UUID}','{name}','{email}','{e5kod}','{comment}')")
+        db.commit()
+        cursor.close()

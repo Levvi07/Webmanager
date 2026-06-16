@@ -18,7 +18,7 @@ class Pico():
     def Listen(self):
         #Listen for serial
         print("Started listening to serial for pico")
-        time.sleep(2)
+        time.sleep(1)
         UUID = self.ser.readline().decode('utf-8').strip()
         return UUID
     

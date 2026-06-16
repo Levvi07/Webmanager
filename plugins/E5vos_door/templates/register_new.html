@@ -7,9 +7,15 @@
         <link rel="stylesheet", href="/css/CUSTOM_SITE_CSS.css">
     </head>
     <body>
-        <form action="/new_card/">
-            <label>Message</label>
-            <input type="text" name="message">    
+        <form action="../new_card/" method="POST">
+            <label>Name</label><br>
+            <input type="text" name="name"> <br><br>
+            <label>Email</label><br>
+            <input type="email" name="email"> <br><br>
+            <label>E5kod</label><br>
+            <input type="text" name="e5kod"> <br><br>
+            <label>Comment</label><br>
+            <input type="text" name="comment">  <br><br>
             <input type="submit" value="Register">
         </form>
     </body>

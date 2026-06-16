@@ -4,5 +4,6 @@
 "DB_db":"Door",
 "DB_Table":"Users",
 "DB_port":"3306",
-"DB_entry":"entry"
+"DB_entry":"entry",
+"Door_open_time":"10"
 }
