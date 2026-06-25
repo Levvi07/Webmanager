@@ -1,0 +1,56 @@
+<!-- header -->
+<header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
+<html>
+    <head>
+        <title>Modify Tag</title>
+        <link rel="stylesheet", href="/css/main_style.css">
+        <link rel="stylesheet", href="../css/modify_tag.css">
+    </head>
+    <body>
+            <table>
+                <tr id="headers">
+                    <td>UUID</td>
+                    <td>Name</td>
+                    <td>Email</td>
+                    <td>E5kod</td>
+                    <td>Comment</td>
+                    <td>Enabled</td>
+                </tr>
+                <form action="../modify_tag_function/data/UUID_DATA" method="POST">
+                <tr id="datas">
+                    <td><input type="text" disabled value="UUID_DATA"></td>
+                    <td><input type="text" name="name" value="NAME_DATA"></td>
+                    <td><input type="email" name="email" value="EMAIL_DATA"></td>
+                    <td><input type="text" name="e5kod" value="E5KOD_DATA"></td>
+                    <td><input type="text" name="comment" value="COMMENT_DATA"></td>
+                    <td><select name="enabled"><option value="0" NULL_SELECTED>0</option><option value="1" ONE_SELECTED>1</option></select></td>
+                </tr>
+                
+                </table>
+                <input type="submit" value="Modify">
+            </form>
+            <br><br><br>
+
+            <form action="../modify_tag_function/groups/UUID_DATA" method="POST" id="GroupCH">
+            <select id="groups_select">
+                <option value="0">Choose Group</option>
+                GROUP_OPTIONS
+            </select> <br>
+            <table>
+                <tbody id="groups_display"></tbody>
+            </table>
+            <input type="hidden" name="groups_post" id="groups_post">
+            <input type="submit" value="Update Groups" id="groups_sub">
+            </form>
+
+
+            <table>
+                <tbody id="groups_display"></tbody>
+            </table>
+            <input type="hidden" name="groups_post" id="groups_post">
+            <script src="../js/group_select.js"></script>
+    </body>
+    
+</html>
+<!--Sets the displayed username-->
+<script src="/js/display_user.js"></script>

@@ -141,7 +141,7 @@ def Listen():
             print("UUID", UUID)
             val = Validate(UUID)
             if val:
-                open_time = dr.site_config_data["Door_open_time"]
+                open_time = dr.plugin_configs["Door_open_time"]
                 try:
                     open_time = int(open_time)
                 except:
@@ -180,6 +180,25 @@ def new_card(request):
     register_new_card = 1
     return "Tap new card...", {"Refresh":"6;url=../register_new/"} 
 
+@endpoint("/users/")
+def users_page():
+    global db
+    users = db.get_users()
+    dom_list = ""
+    for i in range(len(users)):
+        print(users[i])
+        UUID = users[i][0]
+        name = users[i][1]
+        email = users[i][2]
+        e5kod =users[i][3]
+        comment =users[i][4]
+        groups = users[i][5]
+        enabled = users[i][6]
+        created =users[i][7]
+        lastused = users[i][8]
+        dom_list += f"<tr id='{i+1}'>\n<td id='{i+1}_UUID'>{UUID}</td>\n<td id='{i+1}_name'>{name}</td>\n<td id='{i+1}_email'>{email}</td>\n<td id='{i+1}_e5kod'>{e5kod}</td>\n<td id='{i+1}_comment'>{comment}</td>\n<td id='{i+1}_groups'>{groups}</td>\n<td id='{i+1}_enabled'>{enabled}</td>\n<td id='{i+1}_created'>{created}</td>\n<td id='{i+1}_lastused'>{lastused}</td>\n<td id='{i+1}_modify'><a href='../modify_tag/{UUID}'>Modify</a></td>\n<td id='{i+1}_delete'><a href='../delete_tag/{UUID}'>Delete</a></td>\n</tr>\n"
+
+    return serve_html_website("user_data.html").replace("TABLE", dom_list)
 
 @endpoint("/css/*")
 def css(p):
@@ -190,6 +209,75 @@ def css(p):
         return "No such file"
     f = open(f".{pl_path}css/{p}")
     return f.read()
+
+@endpoint("/modify_tag/*")
+def modify_tag(p):
+    global db
+    user = db.get_single_user(p)
+    enabled_data = user[6]
+    enabled_data = int(enabled_data)
+    website = serve_html_website("modify_tag.html")
+    if enabled_data:
+        website = website.replace("option value=\"1\"", "option value=\"1\" selected")
+    else:
+        webiste = website.replace("option value=\"0\"", "option value=\"0\" selected")
+    website = website.replace("UUID_DATA", p).replace("NAME_DATA", user[1]).replace("EMAIL_DATA", user[2]).replace("E5KOD_DATA", user[3]).replace("COMMENT_DATA", user[4])
+    
+    #get groups
+    group_options = ""
+    groups = db.get_groups()
+    for i in range(len(groups)):
+        group_options += f"<option value={i+1}>{groups[i][1]}</option>\n"
+
+    website = website.replace("GROUP_OPTIONS", group_options)
+    return website
+
+@endpoint("/modify_tag_function/groups/*")
+def modify_groups(p,request):
+        global db
+        group_data = request.form["groups_post"]
+        db.update_groups(p, group_data[:-1])
+        return "Groups modified!", {"Refresh": "5; url=../../users/"}
+
+@endpoint("/modify_tag_function/data/*")
+def modify_data(p,request):
+        global db
+        name = request.form["name"]
+        email = request.form["email"]
+        e5kod = request.form["e5kod"]
+        comment = request.form["comment"]
+        enabled = request.form["enabled"]
+        db.update_tag_data(p, name, email, e5kod, comment, enabled)
+        return "Data modified!", {"Refresh": "5; url=../../users/"}
+
+@endpoint("/delete_tag/*")
+def delete_tag(p):
+    global db
+    db.delete_tag(p)
+    return "Tag deleted!", {"Refresh": "5; url=../users/"}
+
+@endpoint("/switch_groups/")
+def switch_groups():
+    global db
+    website = serve_html_website("switch_groups.html")
+    groups = db.get_groups()
+    table = ""
+    for i in range(len(groups)):
+        table += f"<tr id={i+1}><td id='{i+1}ID'>{groups[i][0]}</td><td id='{i+1}name'>{groups[i][1]}</td><td id='{i+1}enabled'>{groups[i][2]}</td><td id='{i+1}link'><a href='../switch_group_function/{groups[i][0]}'>Switch</a></td></tr>\n"
+    return website.replace("TABLE_REPLACE", table)
+
+@endpoint("/switch_group_function/*")
+def switch_function(p):
+    global db
+    groups = db.get_groups()
+    id = int(p)
+    enabled = int(groups[id-1][2])
+    if enabled == 1:
+        enabled = 0
+    else:
+        enabled = 1
+    db.set_group_enabled(id, enabled)
+    return "", {"Refresh": "0; url=../switch_groups/"}
 
 @endpoint("/reloadDB/")
 def dbtest():
@@ -207,3 +295,23 @@ def js(p):
     f = open(f".{pl_path}js/{p}")
     return f.read()
 
+
+@endpoint("/entries/")
+def entries():
+    global db
+    website = serve_html_website("entries.html")
+    entries = db.get_entries()
+    table = ""
+    users = db.get_users()
+    user_pair = {}
+    for l in range(len(users)):
+        user_pair[users[l][0]] = users[l][1]
+    print(user_pair)
+    for i in range(len(entries)):
+        try:
+            username = user_pair[entries[i][1]]
+        except:
+            username = "NO USER ASSIGNED"
+        table += f"<tr><td id='{i+1}ID'>{entries[i][0]}</td><td id='{i+1}UUID'>{entries[i][1]}</td><td id='{i+1}name'>{username}</td><td id='{i+1}succesful'>{entries[i][2]}</td><td id='{i+1}entry_time'>{entries[i][3]}</td></tr>\n"
+    website = website.replace("TABLE", table)
+    return website

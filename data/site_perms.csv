@@ -4,3 +4,4 @@ endpoint,access_level,access_roles_id,access_groups_id,access_users_id,perm_leve
 /test_site.html,-1,,,,1
 /smth1/*,12,1;2;6;4,1;2;3;4;5,1;2;4;3,1817
 /test/,-1,,,,
+/plugins/E5vos_door/*,0,1,1,1,500

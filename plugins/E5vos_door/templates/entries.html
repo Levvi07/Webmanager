@@ -2,7 +2,7 @@
 <header><a href="/" id="home">Home</a> <a href="/user/" id="user_button">Not Logged In</a> <a href="/signout.html" id="signout">Sign Out</a></header>
 <html>
     <head>
-        <title>E5vos door</title>
+        <title>EAM entries</title>
         <meta charset="UTF-8">
         <!-- look out for file paths, as the python file still technically runs in its root folder
         /css/main_style.css => loads the css file in the root folder  
@@ -10,16 +10,14 @@
         This applies to every path, like javascript files, audio, video, favicons, whatever
         This is only for the websites. The __plugin_init__.py still reads from project root with ./ (Avoid security issues)
         -->
-        <link rel="stylesheet", href="./css/main_style.css">
+        <link rel="stylesheet", href="../css/main_style.css">
+        <link rel="stylesheet", href="../css/users.css">
     </head>
     <body>
-        <p>Ezzel majd kezdek valamit. Egyelőre csak kiírjuk, hogy ki mikor jött be.</p>
-        <hr>
-        <a href="./entries/">Entries</a> <br>
-        <a href="./reloadDB//">Reload Database</a> <br>
-        <a href="./switch_groups/">Enable/Disable Groups</a> <br>
-        <a href="./users/">Tags/Users</a> <br>
-        <a href="./register_new/">Register new tag</a> <br>
+        <table>
+            <tr id="header" style="font-weight: bold;border-bottom: 3px solid black;"><td>ID</td><td>UUID</td><td>Name</td><td>Succesful</td><td>entry_time</td></tr>
+            TABLE
+        </table>
     </body>
     
 </html>

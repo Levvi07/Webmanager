@@ -1,0 +1,12 @@
+table{
+    border:solid 3px black;
+    padding:2px;
+    margin:15px;
+    position: relative;
+    border-collapse: collapse;
+}
+
+td{
+    border:solid 1px black;
+    padding:6px;
+}

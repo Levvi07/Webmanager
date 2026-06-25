@@ -10,16 +10,14 @@
         This applies to every path, like javascript files, audio, video, favicons, whatever
         This is only for the websites. The __plugin_init__.py still reads from project root with ./ (Avoid security issues)
         -->
-        <link rel="stylesheet", href="./css/main_style.css">
+        <link rel="stylesheet", href="../css/main_style.css">
+        <link rel="stylesheet", href="../css/users.css">
     </head>
     <body>
-        <p>Ezzel majd kezdek valamit. Egyelőre csak kiírjuk, hogy ki mikor jött be.</p>
-        <hr>
-        <a href="./entries/">Entries</a> <br>
-        <a href="./reloadDB//">Reload Database</a> <br>
-        <a href="./switch_groups/">Enable/Disable Groups</a> <br>
-        <a href="./users/">Tags/Users</a> <br>
-        <a href="./register_new/">Register new tag</a> <br>
+        <table>
+            <tr id="header" style="font-weight: bold;border-bottom: 3px solid black;"><td>UUID</td><td>Name</td><td>Email</td><td>E5kod</td><td>Comment</td><td>Groups</td><td>Enabled</td><td>Created at</td><td>Last used at</td></tr>
+            TABLE
+        </table>
     </body>
     
 </html>

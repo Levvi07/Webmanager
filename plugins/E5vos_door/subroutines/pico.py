@@ -8,7 +8,7 @@ class Pico():
         if not ports:
             print("No serial devices found.")
             return
-        time.sleep(15)
+        time.sleep(5)
         for port in ports:
             if "USB Serial Device" in port.description:
                 self.port = port.device
